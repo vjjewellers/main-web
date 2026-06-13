@@ -56,6 +56,8 @@ export default function Checkout() {
     if (!user) {
       toast.error("Please login to place your order");
 
+      sessionStorage.setItem("vjj_redirect_after_login", "/checkout");
+
       navigate("/login", {
         state: {
           redirectTo: "/checkout",

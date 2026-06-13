@@ -13,10 +13,65 @@ const saveGuestCart = (items) => {
   localStorage.setItem("vjj_guest_cart", JSON.stringify(items));
 };
 
+const getImageUrl = (product) => {
+  if (!product) return "";
+
+  if (typeof product.image === "string") return product.image;
+
+  if (Array.isArray(product.images)) {
+    return (
+      product.images.find((image) => image.isPrimary)?.url ||
+      product.images[0]?.url ||
+      ""
+    );
+  }
+
+  return "";
+};
+
+const normalizeCartItem = (item) => {
+  const product = item.product || item.productId || item;
+
+  const productId =
+    typeof item.productId === "string"
+      ? item.productId
+      : item.productId?._id || product?._id || item._id;
+
+  return {
+    productId,
+    _id: item._id || productId,
+    name: item.name || product?.name || "",
+    slug: item.slug || product?.slug || "",
+    image: item.image || getImageUrl(product),
+    price: Number(item.price || product?.price || 0),
+    quantity: Number(item.quantity || 1),
+    selectedSize: item.selectedSize || "",
+    selectedMaterial: item.selectedMaterial || product?.material || "",
+    stock: Number(item.stock || product?.stock || 999),
+    product: product?._id ? product : undefined,
+  };
+};
+
 const getServerCartItems = (data) => {
-  if (Array.isArray(data?.cart?.items)) return data.cart.items;
-  if (Array.isArray(data?.items)) return data.items;
-  return [];
+  let items = [];
+
+  if (Array.isArray(data)) {
+    items = data;
+  } else if (Array.isArray(data?.items)) {
+    items = data.items;
+  } else if (Array.isArray(data?.cart)) {
+    items = data.cart;
+  } else if (Array.isArray(data?.cart?.items)) {
+    items = data.cart.items;
+  } else if (Array.isArray(data?.cartItems)) {
+    items = data.cartItems;
+  } else if (Array.isArray(data?.cart?.cartItems)) {
+    items = data.cart.cartItems;
+  } else if (Array.isArray(data?.user?.cart)) {
+    items = data.user.cart;
+  }
+
+  return items.map(normalizeCartItem).filter((item) => item.productId);
 };
 
 export const fetchCart = createAsyncThunk(
@@ -24,6 +79,8 @@ export const fetchCart = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await api.get("/cart");
+      console.log("FETCH CART RESPONSE:", data);
+
       return getServerCartItems(data);
     } catch (error) {
       return rejectWithValue(
@@ -46,6 +103,8 @@ export const addCartItem = createAsyncThunk(
         selectedSize,
         selectedMaterial,
       });
+
+      console.log("ADD CART RESPONSE:", data);
 
       return getServerCartItems(data);
     } catch (error) {
@@ -113,6 +172,8 @@ export const mergeGuestCart = createAsyncThunk(
       const guestItems =
         JSON.parse(localStorage.getItem("vjj_guest_cart")) || [];
 
+      console.log("GUEST CART BEFORE MERGE:", guestItems);
+
       if (guestItems.length > 0) {
         for (const item of guestItems) {
           await api.post("/cart/add", {
@@ -127,6 +188,8 @@ export const mergeGuestCart = createAsyncThunk(
       }
 
       const { data } = await api.get("/cart");
+
+      console.log("MERGED CART RESPONSE:", data);
 
       return getServerCartItems(data);
     } catch (error) {
@@ -159,7 +222,7 @@ const cartSlice = createSlice({
     },
 
     addGuestCartItem: (state, action) => {
-      const incomingItem = action.payload;
+      const incomingItem = normalizeCartItem(action.payload);
 
       const existingItem = state.items.find(
         (item) =>
@@ -171,16 +234,14 @@ const cartSlice = createSlice({
 
       if (existingItem) {
         const stock = existingItem.stock || incomingItem.stock || 999;
+
         existingItem.quantity = Math.min(
           Number(existingItem.quantity || 1) +
             Number(incomingItem.quantity || 1),
           stock,
         );
       } else {
-        state.items.unshift({
-          ...incomingItem,
-          quantity: Number(incomingItem.quantity || 1),
-        });
+        state.items.unshift(incomingItem);
       }
 
       saveGuestCart(state.items);
@@ -204,11 +265,9 @@ const cartSlice = createSlice({
           !selectedMaterial;
 
         if (sameProduct && sameSize && sameMaterial) {
-          const stock = item.stock || 999;
-
           return {
             ...item,
-            quantity: Math.min(safeQuantity, stock),
+            quantity: Math.min(safeQuantity, item.stock || 999),
           };
         }
 
@@ -250,84 +309,45 @@ const cartSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    const pending = (state) => {
+      state.loading = true;
+      state.error = null;
+    };
+
+    const fulfilled = (state, action) => {
+      state.loading = false;
+      state.items = action.payload;
+    };
+
+    const rejected = (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+    };
+
     builder
-      .addCase(fetchCart.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchCart.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload;
-      })
-      .addCase(fetchCart.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
+      .addCase(fetchCart.pending, pending)
+      .addCase(fetchCart.fulfilled, fulfilled)
+      .addCase(fetchCart.rejected, rejected)
 
-      .addCase(addCartItem.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(addCartItem.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload;
-      })
-      .addCase(addCartItem.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
+      .addCase(addCartItem.pending, pending)
+      .addCase(addCartItem.fulfilled, fulfilled)
+      .addCase(addCartItem.rejected, rejected)
 
-      .addCase(updateCartItem.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(updateCartItem.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload;
-      })
-      .addCase(updateCartItem.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
+      .addCase(updateCartItem.pending, pending)
+      .addCase(updateCartItem.fulfilled, fulfilled)
+      .addCase(updateCartItem.rejected, rejected)
 
-      .addCase(removeCartItem.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(removeCartItem.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload;
-      })
-      .addCase(removeCartItem.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
+      .addCase(removeCartItem.pending, pending)
+      .addCase(removeCartItem.fulfilled, fulfilled)
+      .addCase(removeCartItem.rejected, rejected)
 
-      .addCase(clearServerCart.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(clearServerCart.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload;
-      })
-      .addCase(clearServerCart.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
+      .addCase(clearServerCart.pending, pending)
+      .addCase(clearServerCart.fulfilled, fulfilled)
+      .addCase(clearServerCart.rejected, rejected)
 
-      .addCase(mergeGuestCart.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(mergeGuestCart.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload;
-      })
-      .addCase(mergeGuestCart.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      });
+      .addCase(mergeGuestCart.pending, pending)
+      .addCase(mergeGuestCart.fulfilled, fulfilled)
+      .addCase(mergeGuestCart.rejected, rejected);
   },
 });
 
@@ -352,8 +372,7 @@ export const selectCartCount = (state) =>
 
 export const selectCartSubtotal = (state) =>
   state.cart.items.reduce((total, item) => {
-    const product = item.product || item;
-    const price = Number(product.price || 0);
+    const price = Number(item.price || item.product?.price || 0);
     const quantity = Number(item.quantity || 1);
 
     return total + price * quantity;

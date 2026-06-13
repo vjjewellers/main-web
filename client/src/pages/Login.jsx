@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -9,7 +9,7 @@ import {
   clearAuthError,
 } from "../features/auth/authSlice";
 
-import { mergeGuestCart } from "../features/cart/cartSlice";
+import { fetchCart, mergeGuestCart } from "../features/cart/cartSlice";
 import { mergeGuestWishlist } from "../features/wishlist/wishlistSlice";
 
 export default function Login() {
@@ -17,9 +17,11 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { user, loading, error } = useSelector((state) => state.auth);
+  const { loading, error } = useSelector((state) => state.auth);
 
-  const redirectTo = location.state?.redirectTo || "/";
+  const savedRedirect = sessionStorage.getItem("vjj_redirect_after_login");
+
+  const redirectTo = location.state?.redirectTo || savedRedirect || "/";
 
   const [isRegister, setIsRegister] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
@@ -31,30 +33,33 @@ export default function Login() {
     phone: "",
   });
 
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(clearAuthError());
-    }
-  }, [error, dispatch]);
-
   const handleChange = (event) => {
+    dispatch(clearAuthError());
+
     setFormData((prev) => ({
       ...prev,
       [event.target.name]: event.target.value,
     }));
   };
 
-  const afterLoginWork = async () => {
-    setIsMerging(true);
-
+  const completeLoginProcess = async () => {
     try {
+      setIsMerging(true);
+
       await dispatch(mergeGuestCart()).unwrap();
+
+      await dispatch(fetchCart()).unwrap();
+
       await dispatch(mergeGuestWishlist()).unwrap();
 
+      sessionStorage.removeItem("vjj_redirect_after_login");
+
       navigate(redirectTo, { replace: true });
-    } catch (error) {
-      toast.error(error || "Login successful, but cart merge failed.");
+    } catch (errorMessage) {
+      toast.error(errorMessage || "Login successful, but cart sync failed.");
+
+      sessionStorage.removeItem("vjj_redirect_after_login");
+
       navigate(redirectTo, { replace: true });
     } finally {
       setIsMerging(false);
@@ -69,11 +74,9 @@ export default function Login() {
 
       if (registerUser.fulfilled.match(result)) {
         toast.success("Registration successful");
-
-        await dispatch(mergeGuestCart()).unwrap();
-        await dispatch(mergeGuestWishlist()).unwrap();
-
-        navigate(redirectTo, { replace: true });
+        await completeLoginProcess();
+      } else {
+        toast.error(result.payload || "Registration failed");
       }
 
       return;
@@ -88,7 +91,9 @@ export default function Login() {
 
     if (loginUser.fulfilled.match(result)) {
       toast.success("Login successful");
-      await afterLoginWork();
+      await completeLoginProcess();
+    } else {
+      toast.error(result.payload || "Login failed");
     }
   };
 
@@ -139,8 +144,14 @@ export default function Login() {
 
             {redirectTo === "/checkout" && (
               <p className="mt-4 rounded-2xl border border-vjj-champagne/20 bg-vjj-champagne/10 p-4 text-sm leading-6 text-vjj-champagne">
-                Please login to continue your checkout. Your guest cart will be
-                saved to your account.
+                Please login to continue checkout. Your guest cart will be saved
+                to your account.
+              </p>
+            )}
+
+            {error && (
+              <p className="mt-4 rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-200">
+                {error}
               </p>
             )}
 
@@ -191,7 +202,7 @@ export default function Login() {
                 className="mt-3 rounded-full bg-gradient-to-r from-vjj-champagne via-vjj-gold to-vjj-bronze px-6 py-4 font-bold text-black shadow-glow transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading || isMerging
-                  ? "Please wait..."
+                  ? "Syncing your cart..."
                   : isRegister
                     ? "Create Account"
                     : "Login"}
