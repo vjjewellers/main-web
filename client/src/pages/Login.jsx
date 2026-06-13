@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
@@ -8,15 +8,21 @@ import {
   registerUser,
   clearAuthError,
 } from "../features/auth/authSlice";
-import { fetchCart } from "../features/cart/cartSlice";
+
+import { mergeGuestCart } from "../features/cart/cartSlice";
+import { mergeGuestWishlist } from "../features/wishlist/wishlistSlice";
 
 export default function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { user, loading, error } = useSelector((state) => state.auth);
 
+  const redirectTo = location.state?.redirectTo || "/";
+
   const [isRegister, setIsRegister] = useState(false);
+  const [isMerging, setIsMerging] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -24,13 +30,6 @@ export default function Login() {
     password: "",
     phone: "",
   });
-
-  useEffect(() => {
-    if (user) {
-      dispatch(fetchCart());
-      navigate("/");
-    }
-  }, [user, dispatch, navigate]);
 
   useEffect(() => {
     if (error) {
@@ -46,6 +45,22 @@ export default function Login() {
     }));
   };
 
+  const afterLoginWork = async () => {
+    setIsMerging(true);
+
+    try {
+      await dispatch(mergeGuestCart()).unwrap();
+      await dispatch(mergeGuestWishlist()).unwrap();
+
+      navigate(redirectTo, { replace: true });
+    } catch (error) {
+      toast.error(error || "Login successful, but cart merge failed.");
+      navigate(redirectTo, { replace: true });
+    } finally {
+      setIsMerging(false);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -54,18 +69,26 @@ export default function Login() {
 
       if (registerUser.fulfilled.match(result)) {
         toast.success("Registration successful");
-      }
-    } else {
-      const result = await dispatch(
-        loginUser({
-          email: formData.email,
-          password: formData.password,
-        }),
-      );
 
-      if (loginUser.fulfilled.match(result)) {
-        toast.success("Login successful");
+        await dispatch(mergeGuestCart()).unwrap();
+        await dispatch(mergeGuestWishlist()).unwrap();
+
+        navigate(redirectTo, { replace: true });
       }
+
+      return;
+    }
+
+    const result = await dispatch(
+      loginUser({
+        email: formData.email,
+        password: formData.password,
+      }),
+    );
+
+    if (loginUser.fulfilled.match(result)) {
+      toast.success("Login successful");
+      await afterLoginWork();
     }
   };
 
@@ -85,9 +108,11 @@ export default function Login() {
             <p className="text-xs font-bold uppercase tracking-[0.35em] text-vjj-champagne">
               Verma ji jewellers
             </p>
+
             <h1 className="mt-4 font-serif text-5xl font-bold">
               Welcome to VJJ Shop
             </h1>
+
             <p className="mt-4 max-w-md leading-7 text-stone-200">
               Login to track your orders, save addresses, manage wishlist and
               continue your premium jewellery shopping experience.
@@ -111,6 +136,13 @@ export default function Login() {
             <h2 className="mt-3 font-serif text-4xl font-bold">
               {isRegister ? "Register" : "Login"}
             </h2>
+
+            {redirectTo === "/checkout" && (
+              <p className="mt-4 rounded-2xl border border-vjj-champagne/20 bg-vjj-champagne/10 p-4 text-sm leading-6 text-vjj-champagne">
+                Please login to continue your checkout. Your guest cart will be
+                saved to your account.
+              </p>
+            )}
 
             <form onSubmit={handleSubmit} className="mt-8 grid gap-4">
               {isRegister && (
@@ -155,10 +187,10 @@ export default function Login() {
               />
 
               <button
-                disabled={loading}
+                disabled={loading || isMerging}
                 className="mt-3 rounded-full bg-gradient-to-r from-vjj-champagne via-vjj-gold to-vjj-bronze px-6 py-4 font-bold text-black shadow-glow transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading
+                {loading || isMerging
                   ? "Please wait..."
                   : isRegister
                     ? "Create Account"
@@ -167,6 +199,7 @@ export default function Login() {
             </form>
 
             <button
+              type="button"
               onClick={() => setIsRegister((prev) => !prev)}
               className="mt-6 text-sm text-stone-300 hover:text-vjj-champagne"
             >
@@ -174,6 +207,11 @@ export default function Login() {
                 ? "Already have an account? Login"
                 : "New customer? Create an account"}
             </button>
+
+            <p className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-6 text-stone-300">
+              Guest cart and guest wishlist will automatically merge into your
+              account after login.
+            </p>
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { openCart, selectCartCount } from "../../features/cart/cartSlice";
 import { CATEGORIES } from "../../utils/constants";
+import { selectWishlistCount } from "../../features/wishlist/wishlistSlice";
 
 const menuVariants = {
   hidden: {
@@ -51,6 +52,7 @@ const itemVariants = {
 };
 
 export default function Navbar() {
+  const wishlistCount = useSelector(selectWishlistCount);
   const dispatch = useDispatch();
   const cartCount = useSelector(selectCartCount);
 
@@ -130,9 +132,18 @@ export default function Navbar() {
             <Search size={18} />
           </Link>
 
-          <button className="hidden rounded-full border border-black/10 p-2.5 transition hover:bg-white md:inline-flex">
+          <Link
+            to="/wishlist"
+            className="relative hidden rounded-full border border-black/10 p-2.5 transition hover:bg-white md:inline-flex"
+          >
             <Heart size={18} />
-          </button>
+
+            {wishlistCount > 0 && (
+              <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-red-500 text-xs font-bold text-white">
+                {wishlistCount}
+              </span>
+            )}
+          </Link>
 
           <Link
             to="/dashboard"
@@ -212,6 +223,10 @@ export default function Navbar() {
 
                 <MobileLink to="/dashboard" onClick={closeMobile}>
                   My Account
+                </MobileLink>
+
+                <MobileLink to="/wishlist" onClick={closeMobile}>
+                  Wishlist
                 </MobileLink>
 
                 <motion.a

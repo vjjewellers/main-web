@@ -15,6 +15,14 @@ import {
   openCart,
 } from "../features/cart/cartSlice";
 
+import {
+  addGuestWishlistItem,
+  addWishlistItem,
+  removeGuestWishlistItem,
+  removeWishlistItem,
+  selectIsWishlisted,
+} from "../features/wishlist/wishlistSlice";
+
 import { formatCurrency } from "../utils/formatCurrency";
 
 export default function ProductDetails() {
@@ -26,7 +34,12 @@ export default function ProductDetails() {
     loading,
     error,
   } = useSelector((state) => state.products);
+
   const { user } = useSelector((state) => state.auth);
+
+  const isWishlisted = useSelector(
+    selectIsWishlisted(product?._id || "no-product"),
+  );
 
   const [activeImage, setActiveImage] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
@@ -87,6 +100,38 @@ export default function ProductDetails() {
 
       dispatch(openCart());
       toast.success("Added to cart");
+    }
+  };
+
+  const handleWishlistToggle = async () => {
+    if (!product) return;
+
+    if (user) {
+      if (isWishlisted) {
+        const result = await dispatch(removeWishlistItem(product._id));
+
+        if (removeWishlistItem.fulfilled.match(result)) {
+          toast.success("Removed from wishlist");
+        } else {
+          toast.error(result.payload || "Unable to remove from wishlist");
+        }
+      } else {
+        const result = await dispatch(addWishlistItem(product._id));
+
+        if (addWishlistItem.fulfilled.match(result)) {
+          toast.success("Added to wishlist");
+        } else {
+          toast.error(result.payload || "Unable to add to wishlist");
+        }
+      }
+    } else {
+      if (isWishlisted) {
+        dispatch(removeGuestWishlistItem(product._id));
+        toast.success("Removed from wishlist");
+      } else {
+        dispatch(addGuestWishlistItem(product));
+        toast.success("Added to wishlist");
+      }
     }
   };
 
@@ -222,9 +267,17 @@ export default function ProductDetails() {
               Add to Cart
             </button>
 
-            <button className="inline-flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-8 py-4 text-sm font-bold text-vjj-black transition hover:bg-vjj-ivory">
-              <Heart size={18} />
-              Wishlist
+            <button
+              type="button"
+              onClick={handleWishlistToggle}
+              className={`inline-flex items-center justify-center gap-2 rounded-full border px-8 py-4 text-sm font-bold transition ${
+                isWishlisted
+                  ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                  : "border-black/10 bg-white text-vjj-black hover:bg-vjj-ivory"
+              }`}
+            >
+              <Heart size={18} fill={isWishlisted ? "currentColor" : "none"} />
+              {isWishlisted ? "Wishlisted" : "Wishlist"}
             </button>
           </div>
 

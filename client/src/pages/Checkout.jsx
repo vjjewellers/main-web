@@ -55,7 +55,13 @@ export default function Checkout() {
 
     if (!user) {
       toast.error("Please login to place your order");
-      navigate("/login");
+
+      navigate("/login", {
+        state: {
+          redirectTo: "/checkout",
+        },
+      });
+
       return;
     }
 

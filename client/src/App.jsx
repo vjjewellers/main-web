@@ -1,13 +1,17 @@
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchWishlist } from "./features/wishlist/wishlistSlice";
 import { Routes, Route } from "react-router-dom";
 
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
+import Cart from "./pages/Cart";
+import Wishlist from "./pages/Wishlist";
 import Login from "./pages/Login";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import UserDashboard from "./pages/UserDashboard";
-import Cart from "./pages/Cart";
 
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -20,6 +24,15 @@ import Footer from "./components/common/Footer";
 import CartDrawer from "./components/common/CartDrawer";
 
 export default function App() {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (user) {
+      dispatch(fetchWishlist());
+    }
+  }, [user, dispatch]);
+
   return (
     <div className="min-h-screen bg-vjj-ivory text-vjj-espresso">
       <Routes>
@@ -35,11 +48,12 @@ export default function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/products" element={<Products />} />
                   <Route path="/products/:slug" element={<ProductDetails />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/wishlist" element={<Wishlist />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/order-success/:id" element={<OrderSuccess />} />
                   <Route path="/dashboard" element={<UserDashboard />} />
-                  <Route path="/cart" element={<Cart />} />
                 </Routes>
               </main>
 
