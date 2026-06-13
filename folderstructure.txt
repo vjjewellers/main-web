@@ -1,0 +1,116 @@
+vjj-shop/
+│
+├── client/
+│   ├── public/
+│   │   └── logo.png
+│   │
+│   ├── src/
+│   │   ├── app/
+│   │   │   └── store.js
+│   │   │
+│   │   ├── components/
+│   │   │   ├── common/
+│   │   │   │   ├── Navbar.jsx
+│   │   │   │   ├── MegaMenu.jsx
+│   │   │   │   ├── Footer.jsx
+│   │   │   │   ├── CartDrawer.jsx
+│   │   │   │   └── ProtectedRoute.jsx
+│   │   │   │
+│   │   │   ├── home/
+│   │   │   │   └── HeroSection.jsx
+│   │   │   │
+│   │   │   ├── product/
+│   │   │   │   ├── ProductCard.jsx
+│   │   │   │   ├── ProductGrid.jsx
+│   │   │   │   └── ProductFilters.jsx
+│   │   │   │
+│   │   │   ├── checkout/
+│   │   │   │   ├── CheckoutStepper.jsx
+│   │   │   │   ├── ShippingForm.jsx
+│   │   │   │   └── OrderSummary.jsx
+│   │   │   │
+│   │   │   └── admin/
+│   │   │       ├── AdminLayout.jsx
+│   │   │       ├── ProductForm.jsx
+│   │   │       └── OrdersTable.jsx
+│   │   │
+│   │   ├── features/
+│   │   │   ├── auth/
+│   │   │   │   └── authSlice.js
+│   │   │   ├── cart/
+│   │   │   │   └── cartSlice.js
+│   │   │   └── products/
+│   │   │       └── productSlice.js
+│   │   │
+│   │   ├── pages/
+│   │   │   ├── Home.jsx
+│   │   │   ├── Products.jsx
+│   │   │   ├── ProductDetails.jsx
+│   │   │   ├── Checkout.jsx
+│   │   │   ├── Login.jsx
+│   │   │   ├── Register.jsx
+│   │   │   ├── UserDashboard.jsx
+│   │   │   └── admin/
+│   │   │       ├── AdminDashboard.jsx
+│   │   │       ├── ManageProducts.jsx
+│   │   │       └── ManageOrders.jsx
+│   │   │
+│   │   ├── services/
+│   │   │   ├── api.js
+│   │   │   ├── authApi.js
+│   │   │   ├── productApi.js
+│   │   │   ├── cartApi.js
+│   │   │   └── orderApi.js
+│   │   │
+│   │   ├── utils/
+│   │   │   ├── constants.js
+│   │   │   └── formatCurrency.js
+│   │   │
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   │
+│   ├── .env
+│   ├── package.json
+│   └── vite.config.js
+│
+└── server/
+    ├── src/
+    │   ├── config/
+    │   │   ├── db.js
+    │   │   └── cloudinary.js
+    │   │
+    │   ├── controllers/
+    │   │   ├── authController.js
+    │   │   ├── productController.js
+    │   │   ├── cartController.js
+    │   │   ├── orderController.js
+    │   │   └── adminController.js
+    │   │
+    │   ├── middleware/
+    │   │   ├── authMiddleware.js
+    │   │   ├── adminMiddleware.js
+    │   │   ├── uploadMiddleware.js
+    │   │   └── errorMiddleware.js
+    │   │
+    │   ├── models/
+    │   │   ├── User.js
+    │   │   ├── Product.js
+    │   │   └── Order.js
+    │   │
+    │   ├── routes/
+    │   │   ├── authRoutes.js
+    │   │   ├── productRoutes.js
+    │   │   ├── cartRoutes.js
+    │   │   ├── orderRoutes.js
+    │   │   └── adminRoutes.js
+    │   │
+    │   ├── utils/
+    │   │   ├── generateToken.js
+    │   │   ├── calculateShipping.js
+    │   │   └── generateOrderNumber.js
+    │   │
+    │   └── app.js
+    │
+    ├── server.js
+    ├── package.json
+    └── .env
