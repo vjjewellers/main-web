@@ -23,6 +23,7 @@ import Navbar from "./components/common/Navbar";
 import Footer from "./components/common/Footer";
 import CartDrawer from "./components/common/CartDrawer";
 import Wishlist from "./pages/wishlist";
+import ChangePassword from "./pages/admin/ChangePassword";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -68,6 +69,7 @@ export default function App() {
           <Route path="products" element={<ManageProducts />} />
           <Route path="orders" element={<ManageOrders />} />
           <Route path="users" element={<ManageUsers />} />
+          <Route path="change-password" element={<ChangePassword />} />
         </Route>
       </Routes>
     </div>
