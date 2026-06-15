@@ -18,6 +18,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import ManageProducts from "./pages/admin/ManageProducts";
 import ManageOrders from "./pages/admin/ManageOrders";
 import ManageUsers from "./pages/admin/ManageUsers";
+import AdminHelp from "./pages/admin/AdminHelp";
 
 import Navbar from "./components/common/Navbar";
 import Footer from "./components/common/Footer";
@@ -71,6 +72,7 @@ export default function App() {
           <Route path="orders" element={<ManageOrders />} />
           <Route path="users" element={<ManageUsers />} />
           <Route path="change-password" element={<ChangePassword />} />
+          <Route path="help" element={<AdminHelp />} />
         </Route>
       </Routes>
     </div>

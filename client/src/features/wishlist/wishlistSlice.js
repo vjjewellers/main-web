@@ -1,16 +1,42 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+
 import api from "../../services/api";
 
-const guestWishlistFromStorage = () => {
+const GUEST_WISHLIST_KEY = "vjj_guest_wishlist";
+
+const getGuestWishlist = () => {
   try {
-    return JSON.parse(localStorage.getItem("vjj_guest_wishlist")) || [];
+    const stored = localStorage.getItem(GUEST_WISHLIST_KEY);
+    return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
   }
 };
 
 const saveGuestWishlist = (items) => {
-  localStorage.setItem("vjj_guest_wishlist", JSON.stringify(items));
+  localStorage.setItem(GUEST_WISHLIST_KEY, JSON.stringify(items || []));
+};
+
+const normalizeWishlistItems = (payload) => {
+  if (Array.isArray(payload)) return payload;
+
+  if (Array.isArray(payload?.wishlist)) return payload.wishlist;
+
+  if (Array.isArray(payload?.items)) return payload.items;
+
+  if (Array.isArray(payload?.user?.wishlist)) return payload.user.wishlist;
+
+  return [];
+};
+
+const getWishlistItemId = (item) => {
+  return item?._id || item?.id || item?.product?._id || item?.productId || item;
+};
+
+const initialState = {
+  items: getGuestWishlist(),
+  loading: false,
+  error: null,
 };
 
 export const fetchWishlist = createAsyncThunk(
@@ -18,7 +44,7 @@ export const fetchWishlist = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await api.get("/wishlist");
-      return data.wishlist || [];
+      return normalizeWishlistItems(data);
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Unable to fetch wishlist",
@@ -29,13 +55,23 @@ export const fetchWishlist = createAsyncThunk(
 
 export const addWishlistItem = createAsyncThunk(
   "wishlist/addWishlistItem",
-  async (productId, { rejectWithValue }) => {
+  async (productId, { getState, rejectWithValue }) => {
     try {
+      const { auth } = getState();
+
+      if (!auth.user) {
+        return {
+          guest: true,
+          productId,
+        };
+      }
+
       const { data } = await api.post(`/wishlist/${productId}`);
-      return data.wishlist || [];
+
+      return normalizeWishlistItems(data);
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Unable to add wishlist item",
+        error.response?.data?.message || "Unable to add to wishlist",
       );
     }
   },
@@ -43,13 +79,23 @@ export const addWishlistItem = createAsyncThunk(
 
 export const removeWishlistItem = createAsyncThunk(
   "wishlist/removeWishlistItem",
-  async (productId, { rejectWithValue }) => {
+  async (productId, { getState, rejectWithValue }) => {
     try {
+      const { auth } = getState();
+
+      if (!auth.user) {
+        return {
+          guest: true,
+          productId,
+        };
+      }
+
       const { data } = await api.delete(`/wishlist/${productId}`);
-      return data.wishlist || [];
+
+      return normalizeWishlistItems(data);
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Unable to remove wishlist item",
+        error.response?.data?.message || "Unable to remove from wishlist",
       );
     }
   },
@@ -57,64 +103,54 @@ export const removeWishlistItem = createAsyncThunk(
 
 export const mergeGuestWishlist = createAsyncThunk(
   "wishlist/mergeGuestWishlist",
-  async (_, { rejectWithValue }) => {
+  async (_, { getState, dispatch, rejectWithValue }) => {
     try {
-      const guestItems =
-        JSON.parse(localStorage.getItem("vjj_guest_wishlist")) || [];
+      const { auth } = getState();
 
-      if (guestItems.length > 0) {
+      if (!auth.user) {
+        return getGuestWishlist();
+      }
+
+      const guestItems = getGuestWishlist();
+
+      if (guestItems.length) {
         for (const item of guestItems) {
-          if (item._id) {
-            await api.post(`/wishlist/${item._id}`);
+          const productId = getWishlistItemId(item);
+
+          if (productId) {
+            try {
+              await api.post(`/wishlist/${productId}`);
+            } catch {
+              // ignore duplicate/already-added item errors
+            }
           }
         }
 
-        localStorage.removeItem("vjj_guest_wishlist");
+        localStorage.removeItem(GUEST_WISHLIST_KEY);
       }
 
-      const { data } = await api.get("/wishlist");
-
-      return data.wishlist || [];
+      const result = await dispatch(fetchWishlist()).unwrap();
+      return result;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Unable to merge wishlist",
-      );
+      return rejectWithValue(error.message || "Unable to sync wishlist");
     }
   },
 );
 
 const wishlistSlice = createSlice({
   name: "wishlist",
-  initialState: {
-    items: guestWishlistFromStorage(),
-    loading: false,
-    error: null,
-  },
+  initialState,
   reducers: {
-    addGuestWishlistItem: (state, action) => {
-      const product = action.payload;
-
-      const exists = state.items.some((item) => item._id === product._id);
-
-      if (!exists) {
-        state.items.unshift(product);
-        saveGuestWishlist(state.items);
-      }
-    },
-
-    removeGuestWishlistItem: (state, action) => {
-      const productId = action.payload;
-
-      state.items = state.items.filter((item) => item._id !== productId);
-      saveGuestWishlist(state.items);
-    },
-
-    clearGuestWishlist: (state) => {
+    clearWishlistState: (state) => {
       state.items = [];
+      state.loading = false;
+      state.error = null;
       saveGuestWishlist([]);
     },
 
-    clearWishlistError: (state) => {
+    resetWishlistToGuest: (state) => {
+      state.items = getGuestWishlist();
+      state.loading = false;
       state.error = null;
     },
   },
@@ -126,11 +162,12 @@ const wishlistSlice = createSlice({
       })
       .addCase(fetchWishlist.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = normalizeWishlistItems(action.payload);
+        state.error = null;
       })
       .addCase(fetchWishlist.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || "Unable to fetch wishlist";
       })
 
       .addCase(addWishlistItem.pending, (state) => {
@@ -139,11 +176,28 @@ const wishlistSlice = createSlice({
       })
       .addCase(addWishlistItem.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+
+        if (action.payload?.guest) {
+          const productId = action.payload.productId;
+
+          const exists = state.items.some(
+            (item) => String(getWishlistItemId(item)) === String(productId),
+          );
+
+          if (!exists) {
+            state.items.push(productId);
+          }
+
+          saveGuestWishlist(state.items);
+        } else {
+          state.items = normalizeWishlistItems(action.payload);
+        }
+
+        state.error = null;
       })
       .addCase(addWishlistItem.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || "Unable to add to wishlist";
       })
 
       .addCase(removeWishlistItem.pending, (state) => {
@@ -152,11 +206,24 @@ const wishlistSlice = createSlice({
       })
       .addCase(removeWishlistItem.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+
+        if (action.payload?.guest) {
+          const productId = action.payload.productId;
+
+          state.items = state.items.filter(
+            (item) => String(getWishlistItemId(item)) !== String(productId),
+          );
+
+          saveGuestWishlist(state.items);
+        } else {
+          state.items = normalizeWishlistItems(action.payload);
+        }
+
+        state.error = null;
       })
       .addCase(removeWishlistItem.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || "Unable to remove from wishlist";
       })
 
       .addCase(mergeGuestWishlist.pending, (state) => {
@@ -165,25 +232,32 @@ const wishlistSlice = createSlice({
       })
       .addCase(mergeGuestWishlist.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = normalizeWishlistItems(action.payload);
+        state.error = null;
       })
       .addCase(mergeGuestWishlist.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || "Unable to sync wishlist";
       });
   },
 });
 
-export const {
-  addGuestWishlistItem,
-  removeGuestWishlistItem,
-  clearGuestWishlist,
-  clearWishlistError,
-} = wishlistSlice.actions;
+export const { clearWishlistState, resetWishlistToGuest } =
+  wishlistSlice.actions;
 
-export const selectWishlistCount = (state) => state.wishlist.items.length;
+export const selectWishlistItems = (state) =>
+  state.wishlist.items || state.wishlist.wishlist || [];
 
-export const selectIsWishlisted = (productId) => (state) =>
-  state.wishlist.items.some((item) => item._id === productId);
+export const selectWishlistCount = (state) =>
+  selectWishlistItems(state).length || 0;
+
+export const selectIsWishlisted = (state, productId) => {
+  const items = selectWishlistItems(state);
+
+  return items.some((item) => {
+    const id = getWishlistItemId(item);
+    return String(id) === String(productId);
+  });
+};
 
 export default wishlistSlice.reducer;

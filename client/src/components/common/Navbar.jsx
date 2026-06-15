@@ -1,294 +1,395 @@
-import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
-import { Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { AnimatePresence, motion } from "framer-motion";
+import {
+  Heart,
+  Home as HomeIcon,
+  LogOut,
+  Menu,
+  Package,
+  Search,
+  ShieldCheck,
+  ShoppingBag,
+  Sparkles,
+  User,
+  X,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
-import { openCart, selectCartCount } from "../../features/cart/cartSlice";
-import { CATEGORIES } from "../../utils/constants";
+import { logout } from "../../features/auth/authSlice";
+import { selectCartCount } from "../../features/cart/cartSlice";
 import { selectWishlistCount } from "../../features/wishlist/wishlistSlice";
+import { BRAND } from "../../utils/constants";
 
-const menuVariants = {
-  hidden: {
-    opacity: 0,
-    y: -18,
-    height: 0,
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    height: "auto",
-    transition: {
-      duration: 0.35,
-      ease: [0.22, 1, 0.36, 1],
-      staggerChildren: 0.035,
-      delayChildren: 0.08,
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: -14,
-    height: 0,
-    transition: {
-      duration: 0.25,
-      ease: [0.4, 0, 0.2, 1],
-    },
-  },
-};
+const navLinks = [
+  { label: "Home", href: "/", icon: HomeIcon },
+  { label: "Products", href: "/products", icon: Package },
+  { label: "Wishlist", href: "/wishlist", icon: Heart },
+  { label: "My Orders", href: "/dashboard", icon: User },
+];
 
-const itemVariants = {
-  hidden: {
-    opacity: 0,
-    y: 12,
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.28,
-      ease: "easeOut",
-    },
-  },
+const isAdminUser = (user) => {
+  const role = String(user?.role || "").toLowerCase();
+  return role === "admin" || role === "super_admin" || role === "superadmin";
 };
 
 export default function Navbar() {
-  const wishlistCount = useSelector(selectWishlistCount);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { user } = useSelector((state) => state.auth);
   const cartCount = useSelector(selectCartCount);
+  const wishlistCount = useSelector(selectWishlistCount);
 
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [searchText, setSearchText] = useState("");
 
-  const closeMobile = () => setMobileOpen(false);
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 12);
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll);
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+
+    const query = searchText.trim();
+
+    if (!query) {
+      navigate("/products");
+      setMobileOpen(false);
+      return;
+    }
+
+    navigate(`/products?search=${encodeURIComponent(query)}`);
+    setMobileOpen(false);
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    localStorage.removeItem("vjj_token");
+    toast.success("Logged out successfully");
+    navigate("/");
+    setMobileOpen(false);
+  };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-black/10 bg-[#fbf7ef]/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-        <Link to="/" className="group" onClick={closeMobile}>
-          <p className="text-xs uppercase tracking-[0.35em] text-vjj-bronze">
-            Verma ji jewellers
-          </p>
-          <h1 className="font-serif text-2xl font-bold tracking-tight text-vjj-black">
-            VJJ Shop
-          </h1>
-        </Link>
-
-        <nav className="hidden items-center gap-8 lg:flex">
-          <NavLink to="/" className="text-sm font-medium hover:text-vjj-bronze">
-            Home
-          </NavLink>
-
-          <div className="group relative">
-            <NavLink
-              to="/products"
-              className="text-sm font-medium hover:text-vjj-bronze"
-            >
-              Jewellery
-            </NavLink>
-
-            <div className="invisible absolute left-1/2 top-8 w-[720px] -translate-x-1/2 rounded-3xl border border-black/10 bg-white/95 p-6 opacity-0 shadow-2xl backdrop-blur-xl transition-all group-hover:visible group-hover:top-10 group-hover:opacity-100">
-              <div className="grid grid-cols-3 gap-4">
-                {CATEGORIES.map((category) => (
-                  <Link
-                    key={category}
-                    to={`/products?category=${encodeURIComponent(category)}`}
-                    className="rounded-2xl border border-stone-200 bg-vjj-ivory px-4 py-3 text-sm font-medium transition hover:border-vjj-gold hover:bg-white hover:text-vjj-bronze"
-                  >
-                    {category}
-                  </Link>
-                ))}
+    <>
+      <header
+        className={`sticky top-0 z-50 border-b border-blue-100/70 bg-white/95 px-4 py-3 transition-all duration-300 sm:px-5 lg:px-8 ${
+          scrolled ? "shadow-[0_14px_40px_rgba(15,23,42,0.08)]" : ""
+        }`}
+      >
+        <div className="mx-auto max-w-[1500px]">
+          <div className="flex items-center justify-between gap-4">
+            <Link to="/" className="flex min-w-0 items-center gap-3">
+              <div className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-sky-400 text-white shadow-lg shadow-blue-500/20 sm:h-12 sm:w-12">
+                <Sparkles size={22} />
               </div>
+
+              <div className="min-w-0">
+                <p className="truncate font-serif text-xl font-bold leading-none text-slate-950 sm:text-2xl">
+                  {BRAND.displayName}
+                </p>
+                <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-[0.2em] text-blue-600 sm:text-[11px]">
+                  Verma ji jewellers
+                </p>
+              </div>
+            </Link>
+
+            <nav className="hidden items-center gap-1 rounded-full border border-blue-100 bg-blue-50/70 p-1 lg:flex">
+              {navLinks.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <NavLink
+                    key={item.href}
+                    to={item.href}
+                    end={item.href === "/"}
+                    className={({ isActive }) =>
+                      `inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition ${
+                        isActive
+                          ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                          : "text-slate-700 hover:bg-white hover:text-blue-700"
+                      }`
+                    }
+                  >
+                    <Icon size={16} />
+                    {item.label}
+                  </NavLink>
+                );
+              })}
+
+              {isAdminUser(user) && (
+                <NavLink
+                  to="/admin"
+                  className={({ isActive }) =>
+                    `inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition ${
+                      isActive
+                        ? "bg-slate-950 text-white"
+                        : "text-slate-700 hover:bg-white hover:text-slate-950"
+                    }`
+                  }
+                >
+                  <ShieldCheck size={16} />
+                  Admin
+                </NavLink>
+              )}
+            </nav>
+
+            <form
+              onSubmit={handleSearch}
+              className="hidden min-w-[230px] items-center gap-2 rounded-full border border-blue-100 bg-blue-50/70 px-4 py-2.5 xl:flex"
+            >
+              <Search size={17} className="text-slate-400" />
+              <input
+                value={searchText}
+                onChange={(event) => setSearchText(event.target.value)}
+                placeholder="Search jewellery..."
+                className="w-full bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-400"
+              />
+            </form>
+
+            <div className="flex items-center gap-2">
+              <Link
+                to="/wishlist"
+                className="relative grid h-10 w-10 place-items-center rounded-full border border-blue-100 bg-blue-50 text-slate-900 transition hover:bg-blue-600 hover:text-white sm:h-11 sm:w-11"
+                aria-label="Wishlist"
+              >
+                <Heart size={19} />
+                {wishlistCount > 0 && (
+                  <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+
+              <Link
+                to="/cart"
+                className="relative grid h-10 w-10 place-items-center rounded-full border border-blue-100 bg-blue-50 text-slate-900 transition hover:bg-blue-600 hover:text-white sm:h-11 sm:w-11"
+                aria-label="Cart"
+              >
+                <ShoppingBag size={19} />
+                {cartCount > 0 && (
+                  <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+
+              {user ? (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="hidden items-center gap-2 rounded-full border border-red-100 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition hover:bg-red-100 md:inline-flex"
+                >
+                  <LogOut size={16} />
+                  Logout
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  className="hidden rounded-full bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 md:inline-flex"
+                >
+                  Login
+                </Link>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setMobileOpen(true)}
+                className="grid h-10 w-10 place-items-center rounded-full border border-blue-100 bg-blue-600 text-white shadow-md shadow-blue-500/20 lg:hidden"
+                aria-label="Open menu"
+              >
+                <Menu size={22} />
+              </button>
             </div>
           </div>
-
-          <NavLink
-            to="/products?featured=true"
-            className="text-sm font-medium hover:text-vjj-bronze"
-          >
-            Signature
-          </NavLink>
-
-          <NavLink
-            to="/products?readyToShip=true"
-            className="text-sm font-medium hover:text-vjj-bronze"
-          >
-            Ready To Ship
-          </NavLink>
-
-          <a
-            href="https://maps.app.goo.gl/qPDMbrZeXN9yqtd28?g_st=iw"
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-medium hover:text-vjj-bronze"
-          >
-            Store
-          </a>
-        </nav>
-
-        <div className="flex items-center gap-3">
-          <Link
-            to="/products"
-            className="hidden rounded-full border border-black/10 p-2.5 transition hover:bg-white md:inline-flex"
-          >
-            <Search size={18} />
-          </Link>
-
-          <Link
-            to="/wishlist"
-            className="relative hidden rounded-full border border-black/10 p-2.5 transition hover:bg-white md:inline-flex"
-          >
-            <Heart size={18} />
-
-            {wishlistCount > 0 && (
-              <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-red-500 text-xs font-bold text-white">
-                {wishlistCount}
-              </span>
-            )}
-          </Link>
-
-          <Link
-            to="/dashboard"
-            className="hidden rounded-full border border-black/10 p-2.5 transition hover:bg-white md:inline-flex"
-          >
-            <User size={18} />
-          </Link>
-
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.92 }}
-            onClick={() => dispatch(openCart())}
-            className="relative rounded-full bg-vjj-black p-2.5 text-white transition hover:bg-vjj-bronze"
-          >
-            <ShoppingBag size={18} />
-
-            {cartCount > 0 && (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-vjj-gold text-xs font-bold text-black"
-              >
-                {cartCount}
-              </motion.span>
-            )}
-          </motion.button>
-
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.92 }}
-            onClick={() => setMobileOpen((prev) => !prev)}
-            className="rounded-full border border-black/10 p-2.5 lg:hidden"
-          >
-            <motion.div
-              animate={{ rotate: mobileOpen ? 180 : 0 }}
-              transition={{ duration: 0.25 }}
-            >
-              {mobileOpen ? <X size={18} /> : <Menu size={18} />}
-            </motion.div>
-          </motion.button>
         </div>
-      </div>
+      </header>
 
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            variants={menuVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="overflow-hidden border-t border-black/10 bg-[#fbf7ef] shadow-xl lg:hidden"
-          >
-            <div className="px-5 py-5">
-              <motion.div variants={itemVariants} className="grid gap-3">
-                <MobileLink to="/" onClick={closeMobile}>
-                  Home
-                </MobileLink>
+      {mobileOpen && (
+        <div className="fixed inset-0 z-[100] lg:hidden">
+          <button
+            type="button"
+            aria-label="Close menu overlay"
+            onClick={() => setMobileOpen(false)}
+            className="absolute inset-0 bg-slate-950/45"
+          />
 
-                <MobileLink to="/products" onClick={closeMobile}>
-                  All Jewellery
-                </MobileLink>
-
-                <MobileLink to="/products?featured=true" onClick={closeMobile}>
-                  Signature
-                </MobileLink>
-
-                <MobileLink
-                  to="/products?readyToShip=true"
-                  onClick={closeMobile}
+          <aside className="absolute right-0 top-0 flex h-full w-[88%] max-w-sm flex-col bg-white shadow-2xl">
+            <div className="border-b border-blue-100 bg-gradient-to-br from-blue-50 via-white to-sky-50 p-5">
+              <div className="flex items-start justify-between gap-4">
+                <Link
+                  to="/"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex min-w-0 items-center gap-3"
                 >
-                  Ready To Ship
-                </MobileLink>
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-blue-600 text-white">
+                    <Sparkles size={22} />
+                  </div>
 
-                <MobileLink to="/cart" onClick={closeMobile}>
-                  Cart
-                </MobileLink>
+                  <div className="min-w-0">
+                    <p className="truncate font-serif text-2xl font-bold text-slate-950">
+                      {BRAND.displayName}
+                    </p>
+                    <p className="mt-1 text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
+                      Jewellery Store
+                    </p>
+                  </div>
+                </Link>
 
-                <MobileLink to="/dashboard" onClick={closeMobile}>
-                  My Account
-                </MobileLink>
-
-                <MobileLink to="/wishlist" onClick={closeMobile}>
-                  Wishlist
-                </MobileLink>
-
-                <motion.a
-                  variants={itemVariants}
-                  href="https://maps.app.goo.gl/qPDMbrZeXN9yqtd28?g_st=iw"
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={closeMobile}
-                  whileTap={{ scale: 0.97 }}
-                  className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-vjj-black shadow-sm"
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen(false)}
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-slate-950 shadow-sm"
                 >
-                  Visit Store
-                </motion.a>
-              </motion.div>
+                  <X size={21} />
+                </button>
+              </div>
 
-              <motion.div
-                variants={itemVariants}
-                className="mt-5 border-t border-black/10 pt-5"
-              >
-                <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-vjj-bronze">
-                  Categories
-                </p>
-
-                <div className="grid grid-cols-2 gap-2">
-                  {CATEGORIES.map((category, index) => (
-                    <motion.div
-                      key={category}
-                      variants={itemVariants}
-                      custom={index}
-                      whileTap={{ scale: 0.97 }}
-                    >
-                      <Link
-                        to={`/products?category=${encodeURIComponent(
-                          category,
-                        )}`}
-                        onClick={closeMobile}
-                        className="block rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-vjj-black shadow-sm transition hover:bg-vjj-black hover:text-white"
-                      >
-                        {category}
-                      </Link>
-                    </motion.div>
-                  ))}
+              {user ? (
+                <div className="mt-5 rounded-2xl border border-blue-100 bg-white p-4">
+                  <p className="text-sm font-bold text-slate-950">
+                    {user.name || "User"}
+                  </p>
+                  <p className="mt-1 break-all text-xs text-slate-500">
+                    {user.email}
+                  </p>
                 </div>
-              </motion.div>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-5 py-3 text-sm font-bold text-white"
+                >
+                  Login / Register
+                </Link>
+              )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
-  );
-}
 
-function MobileLink({ to, onClick, children }) {
-  return (
-    <motion.div variants={itemVariants} whileTap={{ scale: 0.97 }}>
-      <Link
-        to={to}
-        onClick={onClick}
-        className="block rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-vjj-black shadow-sm transition hover:bg-vjj-black hover:text-white"
-      >
-        {children}
-      </Link>
-    </motion.div>
+            <div className="flex-1 overflow-y-auto p-5">
+              <form onSubmit={handleSearch}>
+                <div className="flex items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+                  <Search size={17} className="text-slate-400" />
+                  <input
+                    value={searchText}
+                    onChange={(event) => setSearchText(event.target.value)}
+                    placeholder="Search jewellery..."
+                    className="w-full bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-400"
+                  />
+                </div>
+              </form>
+
+              <div className="mt-6 grid gap-2">
+                {navLinks.map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <NavLink
+                      key={item.href}
+                      to={item.href}
+                      end={item.href === "/"}
+                      onClick={() => setMobileOpen(false)}
+                      className={({ isActive }) =>
+                        `flex items-center justify-between rounded-2xl px-4 py-4 text-sm font-bold transition ${
+                          isActive
+                            ? "bg-blue-600 text-white"
+                            : "bg-slate-50 text-slate-800 hover:bg-blue-50 hover:text-blue-700"
+                        }`
+                      }
+                    >
+                      <span className="flex items-center gap-3">
+                        <Icon size={19} />
+                        {item.label}
+                      </span>
+
+                      {item.href === "/wishlist" && wishlistCount > 0 && (
+                        <span className="rounded-full bg-white/20 px-2 py-1 text-xs">
+                          {wishlistCount}
+                        </span>
+                      )}
+                    </NavLink>
+                  );
+                })}
+
+                <NavLink
+                  to="/cart"
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center justify-between rounded-2xl px-4 py-4 text-sm font-bold transition ${
+                      isActive
+                        ? "bg-blue-600 text-white"
+                        : "bg-slate-50 text-slate-800 hover:bg-blue-50 hover:text-blue-700"
+                    }`
+                  }
+                >
+                  <span className="flex items-center gap-3">
+                    <ShoppingBag size={19} />
+                    Cart
+                  </span>
+
+                  {cartCount > 0 && (
+                    <span className="rounded-full bg-white/20 px-2 py-1 text-xs">
+                      {cartCount}
+                    </span>
+                  )}
+                </NavLink>
+
+                {isAdminUser(user) && (
+                  <NavLink
+                    to="/admin"
+                    onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 rounded-2xl px-4 py-4 text-sm font-bold transition ${
+                        isActive
+                          ? "bg-slate-950 text-white"
+                          : "bg-slate-100 text-slate-800 hover:bg-slate-200"
+                      }`
+                    }
+                  >
+                    <ShieldCheck size={19} />
+                    Admin Panel
+                  </NavLink>
+                )}
+              </div>
+            </div>
+
+            <div className="border-t border-blue-100 p-5">
+              {user ? (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-red-50 px-5 py-3 text-sm font-bold text-red-700 transition hover:bg-red-100"
+                >
+                  <LogOut size={17} />
+                  Logout
+                </button>
+              ) : (
+                <p className="text-center text-xs leading-5 text-slate-500">
+                  Login to save wishlist, cart and view your order history.
+                </p>
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

@@ -12,6 +12,7 @@ import {
   Home,
   ShieldAlert,
   Loader2,
+  BookOpen,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -43,6 +44,11 @@ const navItems = [
     label: "Password",
     href: "/admin/change-password",
     icon: KeyRound,
+  },
+  {
+    label: "Help",
+    href: "/admin/help",
+    icon: BookOpen,
   },
 ];
 

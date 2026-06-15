@@ -6,12 +6,16 @@ export default {
     extend: {
       colors: {
         vjj: {
-          black: "#080504",
-          espresso: "#130d0a",
-          ivory: "#fbf7ef",
-          champagne: "#f5c56b",
-          gold: "#d89b27",
-          bronze: "#9b641b",
+          black: "#0f172a",
+          espresso: "#1e293b",
+          bronze: "#2563eb",
+          gold: "#60a5fa",
+          champagne: "#dbeafe",
+          ivory: "#f8fbff",
+          blush: "#eff6ff",
+          blue: "#3b82f6",
+          sky: "#e0f2fe",
+          glass: "rgba(255,255,255,0.72)",
         },
       },
 
