@@ -1,464 +1,395 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
-import { useSearchParams } from "react-router-dom";
+import { Filter, RefreshCcw, Search, SlidersHorizontal, X } from "lucide-react";
+import toast from "react-hot-toast";
 
-import { fetchProducts } from "../features/products/productSlice";
+import api from "../services/api";
 import ProductCard from "../components/product/ProductCard";
 import { CATEGORIES } from "../utils/constants";
 
-const MATERIALS = [
-  "Gold",
-  "Diamond",
-  "Silver",
-  "Platinum",
-  "Rose Gold",
-  "Gemstone",
-];
-
-const PURITIES = ["9KT", "14KT", "18KT", "22KT", "24KT", "925 Silver"];
-
+const MATERIALS = ["Gold", "Silver", "Diamond", "Platinum", "Gemstone"];
+const PURITIES = ["18K", "22K", "24K", "925 Silver"];
 const SORT_OPTIONS = [
   { label: "Newest First", value: "newest" },
-  { label: "Oldest First", value: "oldest" },
-  { label: "Price: Low to High", value: "price-low" },
-  { label: "Price: High to Low", value: "price-high" },
+  { label: "Price: Low to High", value: "price_asc" },
+  { label: "Price: High to Low", value: "price_desc" },
+  { label: "Name: A to Z", value: "name_asc" },
 ];
 
+const initialFilters = {
+  search: "",
+  category: "",
+  material: "",
+  purity: "",
+  minPrice: "",
+  maxPrice: "",
+  sort: "newest",
+};
+
 export default function Products() {
-  const dispatch = useDispatch();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [products, setProducts] = useState([]);
+  const [filters, setFilters] = useState(initialFilters);
+  const [appliedFilters, setAppliedFilters] = useState(initialFilters);
+  const [loading, setLoading] = useState(true);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const { products, loading, error } = useSelector((state) => state.products);
+  const activeFilterCount = useMemo(() => {
+    return Object.entries(appliedFilters).filter(([key, value]) => {
+      if (key === "sort") return value !== "newest";
+      return Boolean(value);
+    }).length;
+  }, [appliedFilters]);
 
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
 
-  const [openSections, setOpenSections] = useState({
-    category: true,
-    material: true,
-    purity: false,
-    availability: false,
-  });
+      const params = {};
 
-  const filters = useMemo(
-    () => ({
-      search: searchParams.get("search") || "",
-      category: searchParams.get("category") || "",
-      material: searchParams.get("material") || "",
-      purity: searchParams.get("purity") || "",
-      sort: searchParams.get("sort") || "newest",
-      readyToShip: searchParams.get("readyToShip") || "",
-      featured: searchParams.get("featured") || "",
-    }),
-    [searchParams],
-  );
+      if (appliedFilters.search) params.search = appliedFilters.search;
+      if (appliedFilters.category) params.category = appliedFilters.category;
+      if (appliedFilters.material) params.material = appliedFilters.material;
+      if (appliedFilters.purity) params.purity = appliedFilters.purity;
+      if (appliedFilters.minPrice) params.minPrice = appliedFilters.minPrice;
+      if (appliedFilters.maxPrice) params.maxPrice = appliedFilters.maxPrice;
+      if (appliedFilters.sort) params.sort = appliedFilters.sort;
+
+      const { data } = await api.get("/products", { params });
+
+      setProducts(data.products || data || []);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to fetch products");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const params = {
-      sort: filters.sort,
-      limit: 100,
-    };
+    fetchProducts();
+  }, [appliedFilters]);
 
-    if (filters.search) params.search = filters.search;
-    if (filters.category) params.category = filters.category;
-    if (filters.material) params.material = filters.material;
-    if (filters.purity) params.purity = filters.purity;
-    if (filters.readyToShip === "true") params.readyToShip = true;
-    if (filters.featured === "true") params.featured = true;
-
-    dispatch(fetchProducts(params));
-  }, [dispatch, filters]);
-
-  const updateFilter = (key, value) => {
-    const nextParams = new URLSearchParams(searchParams);
-
-    if (!value) {
-      nextParams.delete(key);
-    } else {
-      nextParams.set(key, value);
-    }
-
-    setSearchParams(nextParams);
-  };
-
-  const clearFilters = () => {
-    setSearchParams({});
-    setShowMobileFilters(false);
-  };
-
-  const toggleSection = (section) => {
-    setOpenSections((prev) => ({
+  const handleChange = (field, value) => {
+    setFilters((prev) => ({
       ...prev,
-      [section]: !prev[section],
+      [field]: value,
     }));
   };
 
-  const hasActiveFilters =
-    filters.search ||
-    filters.category ||
-    filters.material ||
-    filters.purity ||
-    filters.readyToShip ||
-    filters.featured ||
-    filters.sort !== "newest";
+  const applyFilters = (event) => {
+    event?.preventDefault();
+    setAppliedFilters(filters);
+    setMobileFiltersOpen(false);
+  };
+
+  const resetFilters = () => {
+    setFilters(initialFilters);
+    setAppliedFilters(initialFilters);
+    setMobileFiltersOpen(false);
+  };
 
   return (
-    <section className="min-h-screen bg-vjj-ivory">
-      <div className="relative overflow-hidden bg-vjj-black px-5 py-16 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(245,197,107,0.18),transparent_32%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.08),transparent_30%)]" />
-
-        <div className="relative mx-auto max-w-7xl">
-          <p className="text-sm font-bold uppercase tracking-[0.35em] text-vjj-champagne">
-            VJJ Collection
+    <section className="bg-vjj-ivory px-5 py-10 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 rounded-[2rem] bg-vjj-black p-6 text-white shadow-luxury md:p-8">
+          <p className="text-sm font-bold uppercase tracking-[0.3em] text-vjj-champagne">
+            Jewellery Collection
           </p>
 
-          <h1 className="mt-4 font-serif text-5xl font-bold md:text-7xl">
-            Explore Jewellery
-          </h1>
+          <div className="mt-4 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+            <div>
+              <h1 className="font-serif text-5xl font-bold md:text-6xl">
+                Explore Products
+              </h1>
 
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-300">
-            Search and filter premium jewellery by category, material, purity,
-            ready-to-ship status and price sorting.
-          </p>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-7xl px-5 py-10">
-        <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_auto_auto] lg:items-center">
-          <div className="relative w-full">
-            <Search
-              size={19}
-              className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-stone-400"
-            />
-
-            <input
-              value={filters.search}
-              onChange={(event) => updateFilter("search", event.target.value)}
-              placeholder="Search by name, SKU or tag..."
-              className="h-14 w-full rounded-full border border-black/10 bg-white pl-14 pr-5 text-sm text-vjj-black outline-none transition placeholder:text-stone-400 focus:border-vjj-gold focus:bg-white focus:shadow-lg"
-            />
-          </div>
-
-          <select
-            value={filters.sort}
-            onChange={(event) => updateFilter("sort", event.target.value)}
-            className="h-14 rounded-full border border-black/10 bg-white px-5 text-sm font-semibold text-vjj-black outline-none focus:border-vjj-gold"
-          >
-            {SORT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-
-          <button
-            onClick={() => setShowMobileFilters((prev) => !prev)}
-            className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-vjj-black px-5 text-sm font-semibold text-white lg:hidden"
-          >
-            <SlidersHorizontal size={18} />
-            Filters
-          </button>
-        </div>
-
-        {hasActiveFilters && (
-          <div className="mb-6 flex flex-wrap items-center gap-3">
-            {filters.search && (
-              <FilterPill
-                label={`Search: ${filters.search}`}
-                onClear={() => updateFilter("search", "")}
-              />
-            )}
-
-            {filters.category && (
-              <FilterPill
-                label={`Category: ${filters.category}`}
-                onClear={() => updateFilter("category", "")}
-              />
-            )}
-
-            {filters.material && (
-              <FilterPill
-                label={`Material: ${filters.material}`}
-                onClear={() => updateFilter("material", "")}
-              />
-            )}
-
-            {filters.purity && (
-              <FilterPill
-                label={`Purity: ${filters.purity}`}
-                onClear={() => updateFilter("purity", "")}
-              />
-            )}
-
-            {filters.readyToShip === "true" && (
-              <FilterPill
-                label="Ready To Ship"
-                onClear={() => updateFilter("readyToShip", "")}
-              />
-            )}
-
-            {filters.featured === "true" && (
-              <FilterPill
-                label="Featured"
-                onClear={() => updateFilter("featured", "")}
-              />
-            )}
-
-            {filters.sort !== "newest" && (
-              <FilterPill
-                label={`Sort: ${
-                  SORT_OPTIONS.find((item) => item.value === filters.sort)
-                    ?.label || filters.sort
-                }`}
-                onClear={() => updateFilter("sort", "newest")}
-              />
-            )}
-
-            <button
-              onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
-            >
-              <X size={15} />
-              Clear All
-            </button>
-          </div>
-        )}
-
-        <div className="grid gap-8 lg:grid-cols-[290px_1fr]">
-          <aside
-            className={`${
-              showMobileFilters ? "block" : "hidden"
-            } h-fit rounded-[2rem] border border-black/10 bg-white p-5 shadow-sm lg:block`}
-          >
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.25em] text-vjj-bronze">
-                  Refine
-                </p>
-                <h2 className="font-serif text-3xl font-bold">Filters</h2>
-              </div>
-
-              <button
-                onClick={clearFilters}
-                className="text-sm font-semibold text-red-600 hover:underline"
-              >
-                Clear
-              </button>
-            </div>
-
-            <CollapsibleFilterSection
-              title="Category"
-              open={openSections.category}
-              onToggle={() => toggleSection("category")}
-            >
-              <FilterButton
-                label="All Categories"
-                active={!filters.category}
-                onClick={() => updateFilter("category", "")}
-              />
-
-              {CATEGORIES.map((category) => (
-                <FilterButton
-                  key={category}
-                  label={category}
-                  active={filters.category === category}
-                  onClick={() => updateFilter("category", category)}
-                />
-              ))}
-            </CollapsibleFilterSection>
-
-            <CollapsibleFilterSection
-              title="Material"
-              open={openSections.material}
-              onToggle={() => toggleSection("material")}
-            >
-              <FilterButton
-                label="All Materials"
-                active={!filters.material}
-                onClick={() => updateFilter("material", "")}
-              />
-
-              {MATERIALS.map((material) => (
-                <FilterButton
-                  key={material}
-                  label={material}
-                  active={filters.material === material}
-                  onClick={() => updateFilter("material", material)}
-                />
-              ))}
-            </CollapsibleFilterSection>
-
-            <CollapsibleFilterSection
-              title="Purity"
-              open={openSections.purity}
-              onToggle={() => toggleSection("purity")}
-            >
-              <FilterButton
-                label="All Purity"
-                active={!filters.purity}
-                onClick={() => updateFilter("purity", "")}
-              />
-
-              {PURITIES.map((purity) => (
-                <FilterButton
-                  key={purity}
-                  label={purity}
-                  active={filters.purity === purity}
-                  onClick={() => updateFilter("purity", purity)}
-                />
-              ))}
-            </CollapsibleFilterSection>
-
-            <CollapsibleFilterSection
-              title="Availability"
-              open={openSections.availability}
-              onToggle={() => toggleSection("availability")}
-            >
-              <label className="flex cursor-pointer items-center justify-between rounded-2xl bg-vjj-ivory px-4 py-3 text-sm font-semibold">
-                <span>Ready To Ship</span>
-                <input
-                  type="checkbox"
-                  checked={filters.readyToShip === "true"}
-                  onChange={(event) =>
-                    updateFilter(
-                      "readyToShip",
-                      event.target.checked ? "true" : "",
-                    )
-                  }
-                />
-              </label>
-
-              <label className="mt-3 flex cursor-pointer items-center justify-between rounded-2xl bg-vjj-ivory px-4 py-3 text-sm font-semibold">
-                <span>Featured Products</span>
-                <input
-                  type="checkbox"
-                  checked={filters.featured === "true"}
-                  onChange={(event) =>
-                    updateFilter("featured", event.target.checked ? "true" : "")
-                  }
-                />
-              </label>
-            </CollapsibleFilterSection>
-          </aside>
-
-          <div>
-            <div className="mb-5 flex items-center justify-between rounded-[2rem] border border-black/10 bg-white px-5 py-4 shadow-sm">
-              <div>
-                <p className="text-sm text-stone-500">Showing</p>
-                <h3 className="font-serif text-2xl font-bold">
-                  {loading ? "Loading..." : `${products.length} Products`}
-                </h3>
-              </div>
-
-              <p className="hidden text-sm text-stone-500 md:block">
-                Premium jewellery from Verma ji jewellers
+              <p className="mt-4 max-w-2xl text-stone-300">
+                Discover handpicked gold, silver and jewellery collections from
+                Verma ji jewellers.
               </p>
             </div>
 
-            {loading && (
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {[1, 2, 3, 4, 5, 6].map((item) => (
-                  <div
-                    key={item}
-                    className="h-[560px] animate-pulse rounded-[2rem] bg-white"
-                  />
-                ))}
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => setMobileFiltersOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-vjj-champagne px-6 py-3 text-sm font-bold text-vjj-black transition hover:bg-vjj-gold lg:hidden"
+            >
+              <SlidersHorizontal size={17} />
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-vjj-black text-xs text-white">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
 
-            {error && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-red-700">
-                {error}
-              </div>
-            )}
+        <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
+          <aside className="hidden lg:block">
+            <FilterPanel
+              filters={filters}
+              onChange={handleChange}
+              onApply={applyFilters}
+              onReset={resetFilters}
+              activeFilterCount={activeFilterCount}
+            />
+          </aside>
 
-            {!loading && !error && products.length === 0 && (
+          <main>
+            <div className="mb-6 flex flex-col justify-between gap-4 rounded-[1.5rem] border border-black/10 bg-white p-4 shadow-sm md:flex-row md:items-center">
+              <div>
+                <p className="font-serif text-2xl font-bold text-vjj-black">
+                  {loading ? "Loading..." : `${products.length} Products Found`}
+                </p>
+
+                <p className="text-sm text-stone-600">
+                  Use filters to find the perfect jewellery faster.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {activeFilterCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="inline-flex items-center gap-2 rounded-full border border-black/10 px-4 py-2 text-sm font-bold text-vjj-black transition hover:bg-vjj-black hover:text-white"
+                  >
+                    <X size={16} />
+                    Clear
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={fetchProducts}
+                  className="inline-flex items-center gap-2 rounded-full bg-vjj-black px-4 py-2 text-sm font-bold text-white transition hover:bg-vjj-bronze"
+                >
+                  <RefreshCcw size={16} />
+                  Refresh
+                </button>
+              </div>
+            </div>
+
+            {loading ? (
+              <ProductGridSkeleton />
+            ) : products.length === 0 ? (
               <div className="rounded-[2rem] border border-black/10 bg-white p-10 text-center shadow-sm">
-                <h2 className="font-serif text-4xl font-bold">
+                <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-vjj-ivory text-vjj-bronze">
+                  <Search />
+                </div>
+
+                <h2 className="mt-5 font-serif text-3xl font-bold text-vjj-black">
                   No products found
                 </h2>
 
-                <p className="mx-auto mt-3 max-w-xl text-stone-600">
-                  Try clearing filters or search with another jewellery name,
-                  SKU or tag.
+                <p className="mt-2 text-stone-600">
+                  Try changing your search or filter options.
                 </p>
 
                 <button
-                  onClick={clearFilters}
-                  className="mt-7 rounded-full bg-vjj-black px-7 py-3 text-sm font-semibold text-white transition hover:bg-vjj-bronze"
+                  type="button"
+                  onClick={resetFilters}
+                  className="mt-6 rounded-full bg-vjj-black px-6 py-3 text-sm font-bold text-white transition hover:bg-vjj-bronze"
                 >
-                  Clear Filters
+                  Reset Filters
                 </button>
               </div>
-            )}
-
-            {!loading && !error && products.length > 0 && (
+            ) : (
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {products.map((product) => (
                   <ProductCard key={product._id} product={product} />
                 ))}
               </div>
             )}
-          </div>
+          </main>
         </div>
       </div>
+
+      {mobileFiltersOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/60 px-5 py-8 backdrop-blur-sm lg:hidden">
+          <div className="mx-auto max-h-[90vh] max-w-md overflow-y-auto rounded-[2rem] bg-vjj-ivory p-5 shadow-2xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="font-serif text-3xl font-bold text-vjj-black">
+                Filters
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(false)}
+                className="rounded-full border border-black/10 bg-white p-2"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <FilterPanel
+              filters={filters}
+              onChange={handleChange}
+              onApply={applyFilters}
+              onReset={resetFilters}
+              activeFilterCount={activeFilterCount}
+            />
+          </div>
+        </div>
+      )}
     </section>
   );
 }
 
-function CollapsibleFilterSection({ title, open, onToggle, children }) {
+function FilterPanel({
+  filters,
+  onChange,
+  onApply,
+  onReset,
+  activeFilterCount,
+}) {
   return (
-    <div className="border-t border-black/10 py-4 first:border-t-0 first:pt-0">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center justify-between rounded-2xl px-1 py-2 text-left"
-      >
-        <h3 className="text-sm font-bold uppercase tracking-[0.22em] text-stone-500">
-          {title}
-        </h3>
-
-        <ChevronDown
-          size={18}
-          className={`text-stone-500 transition ${
-            open ? "rotate-180" : "rotate-0"
-          }`}
-        />
-      </button>
-
-      {open && <div className="mt-3 grid gap-2">{children}</div>}
-    </div>
-  );
-}
-
-function FilterButton({ label, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${
-        active
-          ? "bg-vjj-black text-white"
-          : "bg-vjj-ivory text-vjj-black hover:bg-stone-100"
-      }`}
+    <form
+      onSubmit={onApply}
+      className="sticky top-28 rounded-[2rem] border border-black/10 bg-white p-5 shadow-sm"
     >
-      {label}
-    </button>
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <div className="grid h-10 w-10 place-items-center rounded-full bg-vjj-ivory text-vjj-bronze">
+            <Filter size={18} />
+          </div>
+
+          <div>
+            <h2 className="font-serif text-2xl font-bold text-vjj-black">
+              Filters
+            </h2>
+            <p className="text-xs text-stone-500">{activeFilterCount} active</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onReset}
+          className="text-xs font-bold text-vjj-bronze hover:underline"
+        >
+          Reset
+        </button>
+      </div>
+
+      <div className="space-y-5">
+        <label className="block">
+          <span className="mb-2 block text-sm font-bold text-vjj-black">
+            Search
+          </span>
+
+          <div className="flex items-center gap-2 rounded-2xl border border-black/10 bg-vjj-ivory px-4 py-3">
+            <Search size={17} className="text-stone-400" />
+            <input
+              value={filters.search}
+              onChange={(event) => onChange("search", event.target.value)}
+              placeholder="Search ring, bangle, SKU..."
+              className="w-full bg-transparent text-sm outline-none placeholder:text-stone-400"
+            />
+          </div>
+        </label>
+
+        <SelectField
+          label="Category"
+          value={filters.category}
+          onChange={(value) => onChange("category", value)}
+          options={CATEGORIES}
+        />
+
+        <SelectField
+          label="Material"
+          value={filters.material}
+          onChange={(value) => onChange("material", value)}
+          options={MATERIALS}
+        />
+
+        <SelectField
+          label="Purity"
+          value={filters.purity}
+          onChange={(value) => onChange("purity", value)}
+          options={PURITIES}
+        />
+
+        <div>
+          <span className="mb-2 block text-sm font-bold text-vjj-black">
+            Price Range
+          </span>
+
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              type="number"
+              min="0"
+              value={filters.minPrice}
+              onChange={(event) => onChange("minPrice", event.target.value)}
+              placeholder="Min"
+              className="rounded-2xl border border-black/10 bg-vjj-ivory px-4 py-3 text-sm outline-none focus:border-vjj-gold"
+            />
+
+            <input
+              type="number"
+              min="0"
+              value={filters.maxPrice}
+              onChange={(event) => onChange("maxPrice", event.target.value)}
+              placeholder="Max"
+              className="rounded-2xl border border-black/10 bg-vjj-ivory px-4 py-3 text-sm outline-none focus:border-vjj-gold"
+            />
+          </div>
+        </div>
+
+        <SelectField
+          label="Sort By"
+          value={filters.sort}
+          onChange={(value) => onChange("sort", value)}
+          options={SORT_OPTIONS}
+          optionType="object"
+        />
+      </div>
+
+      <button
+        type="submit"
+        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-vjj-black px-6 py-3 text-sm font-bold text-white transition hover:bg-vjj-bronze"
+      >
+        Apply Filters
+      </button>
+    </form>
   );
 }
 
-function FilterPill({ label, onClear }) {
+function SelectField({ label, value, onChange, options, optionType = "text" }) {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-vjj-black shadow-sm">
-      {label}
+    <label className="block">
+      <span className="mb-2 block text-sm font-bold text-vjj-black">
+        {label}
+      </span>
 
-      <button
-        type="button"
-        onClick={onClear}
-        className="grid h-5 w-5 place-items-center rounded-full bg-vjj-ivory text-vjj-black hover:bg-red-100 hover:text-red-600"
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-2xl border border-black/10 bg-vjj-ivory px-4 py-3 text-sm outline-none focus:border-vjj-gold"
       >
-        <X size={13} />
-      </button>
-    </span>
+        <option value="">All</option>
+
+        {options.map((option) => {
+          const optionValue = optionType === "object" ? option.value : option;
+          const optionLabel = optionType === "object" ? option.label : option;
+
+          return (
+            <option key={optionValue} value={optionValue}>
+              {optionLabel}
+            </option>
+          );
+        })}
+      </select>
+    </label>
+  );
+}
+
+function ProductGridSkeleton() {
+  return (
+    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      {[1, 2, 3, 4, 5, 6].map((item) => (
+        <div
+          key={item}
+          className="h-[430px] animate-pulse rounded-[2rem] bg-white"
+        />
+      ))}
+    </div>
   );
 }

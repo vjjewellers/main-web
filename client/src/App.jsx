@@ -24,6 +24,7 @@ import Footer from "./components/common/Footer";
 import CartDrawer from "./components/common/CartDrawer";
 import Wishlist from "./pages/wishlist";
 import ChangePassword from "./pages/admin/ChangePassword";
+import FloatingWhatsApp from "./components/common/FloatingWhatsApp";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -44,7 +45,7 @@ export default function App() {
             <>
               <Navbar />
               <CartDrawer />
-
+              <FloatingWhatsApp />
               <main>
                 <Routes>
                   <Route path="/" element={<Home />} />
