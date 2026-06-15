@@ -7,7 +7,7 @@ import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
-import Wishlist from "./pages/Wishlist";
+
 import Login from "./pages/Login";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
@@ -22,6 +22,7 @@ import ManageUsers from "./pages/admin/ManageUsers";
 import Navbar from "./components/common/Navbar";
 import Footer from "./components/common/Footer";
 import CartDrawer from "./components/common/CartDrawer";
+import Wishlist from "./pages/wishlist";
 
 export default function App() {
   const dispatch = useDispatch();
