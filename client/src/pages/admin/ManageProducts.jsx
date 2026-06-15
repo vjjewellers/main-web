@@ -1,40 +1,150 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, RefreshCcw, Package, Pencil, X } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  RefreshCcw,
+  Package,
+  Pencil,
+  X,
+  ImagePlus,
+  Star,
+  CheckCircle2,
+  Layers,
+  ExternalLink,
+} from "lucide-react";
 import toast from "react-hot-toast";
 
 import api from "../../services/api";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { CATEGORIES } from "../../utils/constants";
 
+const emptySpecGroups = [
+  {
+    title: "Metal Details",
+    rows: [
+      { label: "Metal", value: "" },
+      { label: "Purity", value: "" },
+      { label: "Metal Colour", value: "" },
+      { label: "Gross Weight", value: "" },
+      { label: "Net Weight", value: "" },
+    ],
+  },
+  {
+    title: "Stone Details",
+    rows: [
+      { label: "Stone Type", value: "" },
+      { label: "Stone Colour", value: "" },
+      { label: "Stone Weight", value: "" },
+      { label: "Stone Count", value: "" },
+    ],
+  },
+  {
+    title: "General Details",
+    rows: [
+      { label: "Jewellery Type", value: "" },
+      { label: "Product Type", value: "" },
+      { label: "Collection", value: "" },
+      { label: "Gender", value: "" },
+      { label: "Occasion", value: "" },
+    ],
+  },
+];
+
 const initialForm = {
   name: "",
   sku: "",
   description: "",
+  longDescription: "",
   category: "Rings",
+  productType: "",
+  productCollection: "",
+  gender: "",
+  occasion: "",
   material: "Gold",
+  materialColor: "",
   purity: "22KT",
+  grossWeight: "",
+  netWeight: "",
   price: "",
   compareAtPrice: "",
-  makingCharges: "",
-  taxRate: 3,
+  makingCharge: "",
+  gstPercent: 3,
   stock: "",
   sizes: "",
-  imageUrl: "",
   tags: "",
+  highlights: "",
+  careInstructions:
+    "Store jewellery in a dry place. Avoid contact with perfume, water and chemicals. Clean gently with a soft cloth.",
+  images: [],
+  specificationGroups: emptySpecGroups,
   isFeatured: false,
   isReadyToShip: false,
 };
+
+const materialOptions = [
+  "Gold",
+  "Diamond",
+  "Silver",
+  "Platinum",
+  "Rose Gold",
+  "Gemstone",
+];
+
+const purityOptions = ["9KT", "14KT", "18KT", "22KT", "24KT", "925 Silver"];
+
+const cloneInitialForm = () => ({
+  ...initialForm,
+  images: [],
+  specificationGroups: JSON.parse(JSON.stringify(emptySpecGroups)),
+});
+
+const toCommaString = (value) => {
+  if (Array.isArray(value)) return value.join(", ");
+  return value || "";
+};
+
+const commaToArray = (value) => {
+  if (!value) return [];
+
+  return String(value)
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+const cleanSpecGroups = (groups) => {
+  if (!Array.isArray(groups)) return [];
+
+  return groups
+    .map((group) => ({
+      title: String(group.title || "").trim(),
+      rows: Array.isArray(group.rows)
+        ? group.rows
+            .map((row) => ({
+              label: String(row.label || "").trim(),
+              value: String(row.value || "").trim(),
+            }))
+            .filter((row) => row.label || row.value)
+        : [],
+    }))
+    .filter((group) => group.title || group.rows.length > 0);
+};
+
+const getProductImage = (product) =>
+  product.images?.find((image) => image.isPrimary)?.url ||
+  product.images?.[0]?.url ||
+  "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=300&q=90";
 
 export default function ManageProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(cloneInitialForm());
   const [creating, setCreating] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const [editingProduct, setEditingProduct] = useState(null);
-  const [editForm, setEditForm] = useState(initialForm);
+  const [editForm, setEditForm] = useState(cloneInitialForm());
   const [updating, setUpdating] = useState(false);
   const [uploadingEditImage, setUploadingEditImage] = useState(false);
 
@@ -69,89 +179,315 @@ export default function ManageProducts() {
     }));
   };
 
-  const handleImageUpload = async (event) => {
-    const file = event.target.files?.[0];
+  const handleEditChange = (event) => {
+    const { name, value, type, checked } = event.target;
 
-    if (!file) return;
+    setEditForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const uploadImageToCloudinary = async (file) => {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const { data } = await api.post("/upload/image", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return {
+      url: data.image.url,
+      publicId: data.image.publicId || data.image.public_id || "",
+      alt: "",
+      isPrimary: false,
+    };
+  };
+
+  const handleImageUpload = async (event) => {
+    const files = Array.from(event.target.files || []);
+
+    if (files.length === 0) return;
+
+    if (form.images.length + files.length > 4) {
+      toast.error("Maximum 4 product images are allowed");
+      event.target.value = "";
+      return;
+    }
 
     try {
       setUploadingImage(true);
 
-      const formData = new FormData();
-      formData.append("image", file);
+      const uploadedImages = [];
 
-      const { data } = await api.post("/upload/image", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      for (const file of files) {
+        const uploaded = await uploadImageToCloudinary(file);
+        uploadedImages.push(uploaded);
+      }
+
+      setForm((prev) => {
+        const nextImages = [...prev.images, ...uploadedImages].slice(0, 4);
+
+        return {
+          ...prev,
+          images: nextImages.map((image, index) => ({
+            ...image,
+            alt: image.alt || prev.name,
+            isPrimary: index === 0 ? true : Boolean(image.isPrimary),
+          })),
+        };
       });
-
-      setForm((prev) => ({
-        ...prev,
-        imageUrl: data.image.url,
-      }));
 
       toast.success("Image uploaded successfully");
     } catch (error) {
       toast.error(error.response?.data?.message || "Image upload failed");
     } finally {
       setUploadingImage(false);
+      event.target.value = "";
     }
+  };
+
+  const handleEditImageUpload = async (event) => {
+    const files = Array.from(event.target.files || []);
+
+    if (files.length === 0) return;
+
+    if (editForm.images.length + files.length > 4) {
+      toast.error("Maximum 4 product images are allowed");
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      setUploadingEditImage(true);
+
+      const uploadedImages = [];
+
+      for (const file of files) {
+        const uploaded = await uploadImageToCloudinary(file);
+        uploadedImages.push(uploaded);
+      }
+
+      setEditForm((prev) => {
+        const nextImages = [...prev.images, ...uploadedImages].slice(0, 4);
+
+        return {
+          ...prev,
+          images: nextImages.map((image, index) => ({
+            ...image,
+            alt: image.alt || prev.name,
+            isPrimary: index === 0 ? true : Boolean(image.isPrimary),
+          })),
+        };
+      });
+
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Image upload failed");
+    } finally {
+      setUploadingEditImage(false);
+      event.target.value = "";
+    }
+  };
+
+  const removeImage = (index, mode = "create") => {
+    const setter = mode === "edit" ? setEditForm : setForm;
+
+    setter((prev) => {
+      const images = prev.images.filter(
+        (_, imageIndex) => imageIndex !== index,
+      );
+
+      return {
+        ...prev,
+        images: images.map((image, imageIndex) => ({
+          ...image,
+          isPrimary: imageIndex === 0 ? true : image.isPrimary,
+        })),
+      };
+    });
+  };
+
+  const setPrimaryImage = (index, mode = "create") => {
+    const setter = mode === "edit" ? setEditForm : setForm;
+
+    setter((prev) => ({
+      ...prev,
+      images: prev.images.map((image, imageIndex) => ({
+        ...image,
+        isPrimary: imageIndex === index,
+      })),
+    }));
+  };
+
+  const updateSpecGroupTitle = (groupIndex, value, mode = "create") => {
+    const setter = mode === "edit" ? setEditForm : setForm;
+
+    setter((prev) => ({
+      ...prev,
+      specificationGroups: prev.specificationGroups.map((group, index) =>
+        index === groupIndex ? { ...group, title: value } : group,
+      ),
+    }));
+  };
+
+  const updateSpecRow = (
+    groupIndex,
+    rowIndex,
+    field,
+    value,
+    mode = "create",
+  ) => {
+    const setter = mode === "edit" ? setEditForm : setForm;
+
+    setter((prev) => ({
+      ...prev,
+      specificationGroups: prev.specificationGroups.map((group, index) =>
+        index === groupIndex
+          ? {
+              ...group,
+              rows: group.rows.map((row, currentRowIndex) =>
+                currentRowIndex === rowIndex
+                  ? {
+                      ...row,
+                      [field]: value,
+                    }
+                  : row,
+              ),
+            }
+          : group,
+      ),
+    }));
+  };
+
+  const addSpecRow = (groupIndex, mode = "create") => {
+    const setter = mode === "edit" ? setEditForm : setForm;
+
+    setter((prev) => ({
+      ...prev,
+      specificationGroups: prev.specificationGroups.map((group, index) =>
+        index === groupIndex
+          ? {
+              ...group,
+              rows: [...group.rows, { label: "", value: "" }],
+            }
+          : group,
+      ),
+    }));
+  };
+
+  const removeSpecRow = (groupIndex, rowIndex, mode = "create") => {
+    const setter = mode === "edit" ? setEditForm : setForm;
+
+    setter((prev) => ({
+      ...prev,
+      specificationGroups: prev.specificationGroups.map((group, index) =>
+        index === groupIndex
+          ? {
+              ...group,
+              rows: group.rows.filter(
+                (_, currentRowIndex) => currentRowIndex !== rowIndex,
+              ),
+            }
+          : group,
+      ),
+    }));
+  };
+
+  const addSpecGroup = (mode = "create") => {
+    const setter = mode === "edit" ? setEditForm : setForm;
+
+    setter((prev) => ({
+      ...prev,
+      specificationGroups: [
+        ...prev.specificationGroups,
+        {
+          title: "Custom Details",
+          rows: [{ label: "", value: "" }],
+        },
+      ],
+    }));
+  };
+
+  const removeSpecGroup = (groupIndex, mode = "create") => {
+    const setter = mode === "edit" ? setEditForm : setForm;
+
+    setter((prev) => ({
+      ...prev,
+      specificationGroups: prev.specificationGroups.filter(
+        (_, index) => index !== groupIndex,
+      ),
+    }));
+  };
+
+  const buildPayload = (sourceForm) => ({
+    name: sourceForm.name,
+    sku: sourceForm.sku,
+    description: sourceForm.description,
+    longDescription: sourceForm.longDescription,
+    category: sourceForm.category,
+    productType: sourceForm.productType,
+    productCollection: sourceForm.productCollection,
+    gender: sourceForm.gender,
+    occasion: sourceForm.occasion,
+    material: sourceForm.material,
+    materialColor: sourceForm.materialColor,
+    purity: sourceForm.purity,
+    grossWeight: sourceForm.grossWeight,
+    netWeight: sourceForm.netWeight,
+    price: Number(sourceForm.price),
+    compareAtPrice: Number(sourceForm.compareAtPrice || 0),
+    makingCharge: Number(sourceForm.makingCharge || 0),
+    gstPercent: Number(sourceForm.gstPercent || 3),
+    stock: Number(sourceForm.stock || 0),
+    sizes: commaToArray(sourceForm.sizes),
+    tags: commaToArray(sourceForm.tags),
+    highlights: commaToArray(sourceForm.highlights),
+    careInstructions: sourceForm.careInstructions,
+    images: sourceForm.images.slice(0, 4).map((image, index) => ({
+      ...image,
+      alt: image.alt || sourceForm.name,
+      isPrimary: image.isPrimary || index === 0,
+    })),
+    specificationGroups: cleanSpecGroups(sourceForm.specificationGroups),
+    isFeatured: sourceForm.isFeatured,
+    isReadyToShip: sourceForm.isReadyToShip,
+  });
+
+  const validateForm = (sourceForm) => {
+    if (
+      !sourceForm.name ||
+      !sourceForm.sku ||
+      !sourceForm.description ||
+      !sourceForm.price
+    ) {
+      toast.error("Please fill name, SKU, short description and price");
+      return false;
+    }
+
+    if (sourceForm.images.length > 4) {
+      toast.error("Maximum 4 product images are allowed");
+      return false;
+    }
+
+    return true;
   };
 
   const handleCreateProduct = async (event) => {
     event.preventDefault();
 
-    if (!form.name || !form.sku || !form.description || !form.price) {
-      toast.error("Please fill name, SKU, description and price");
-      return;
-    }
+    if (!validateForm(form)) return;
 
     try {
       setCreating(true);
 
-      const payload = {
-        name: form.name,
-        sku: form.sku,
-        description: form.description,
-        category: form.category,
-        material: form.material,
-        purity: form.purity,
-        price: Number(form.price),
-        compareAtPrice: Number(form.compareAtPrice || 0),
-        makingCharges: Number(form.makingCharges || 0),
-        taxRate: Number(form.taxRate || 3),
-        stock: Number(form.stock || 0),
-        sizes: form.sizes
-          ? form.sizes
-              .split(",")
-              .map((item) => item.trim())
-              .filter(Boolean)
-          : [],
-        images: form.imageUrl
-          ? [
-              {
-                url: form.imageUrl,
-                alt: form.name,
-                isPrimary: true,
-              },
-            ]
-          : [],
-        tags: form.tags
-          ? form.tags
-              .split(",")
-              .map((item) => item.trim())
-              .filter(Boolean)
-          : [],
-        isFeatured: form.isFeatured,
-        isReadyToShip: form.isReadyToShip,
-      };
-
-      await api.post("/products/admin", payload);
+      await api.post("/products/admin", buildPayload(form));
 
       toast.success("Product created successfully");
 
-      setForm(initialForm);
+      setForm(cloneInitialForm());
       fetchProducts();
     } catch (error) {
       toast.error(error.response?.data?.message || "Product creation failed");
@@ -183,17 +519,32 @@ export default function ManageProducts() {
       name: product.name || "",
       sku: product.sku || "",
       description: product.description || "",
+      longDescription: product.longDescription || "",
       category: product.category || "Rings",
+      productType: product.productType || "",
+      productCollection: product.productCollection || product.collection || "",
+      gender: product.gender || "",
+      occasion: product.occasion || "",
       material: product.material || "Gold",
+      materialColor: product.materialColor || "",
       purity: product.purity || "22KT",
+      grossWeight: product.grossWeight || "",
+      netWeight: product.netWeight || "",
       price: product.price || "",
       compareAtPrice: product.compareAtPrice || "",
-      makingCharges: product.makingCharges || "",
-      taxRate: product.taxRate || 3,
+      makingCharge: product.makingCharge || product.makingCharges || "",
+      gstPercent: product.gstPercent || product.taxRate || 3,
       stock: product.stock || "",
-      sizes: product.sizes?.join(", ") || "",
-      imageUrl: product.images?.[0]?.url || "",
-      tags: product.tags?.join(", ") || "",
+      sizes: toCommaString(product.sizes),
+      tags: toCommaString(product.tags),
+      highlights: toCommaString(product.highlights),
+      careInstructions:
+        product.careInstructions || initialForm.careInstructions,
+      images: product.images || [],
+      specificationGroups:
+        product.specificationGroups?.length > 0
+          ? product.specificationGroups
+          : JSON.parse(JSON.stringify(emptySpecGroups)),
       isFeatured: Boolean(product.isFeatured),
       isReadyToShip: Boolean(product.isReadyToShip),
     });
@@ -201,104 +552,22 @@ export default function ManageProducts() {
 
   const closeEditModal = () => {
     setEditingProduct(null);
-    setEditForm(initialForm);
-  };
-
-  const handleEditChange = (event) => {
-    const { name, value, type, checked } = event.target;
-
-    setEditForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  const handleEditImageUpload = async (event) => {
-    const file = event.target.files?.[0];
-
-    if (!file) return;
-
-    try {
-      setUploadingEditImage(true);
-
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const { data } = await api.post("/upload/image", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      setEditForm((prev) => ({
-        ...prev,
-        imageUrl: data.image.url,
-      }));
-
-      toast.success("Image uploaded successfully");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Image upload failed");
-    } finally {
-      setUploadingEditImage(false);
-    }
+    setEditForm(cloneInitialForm());
   };
 
   const handleUpdateProduct = async (event) => {
     event.preventDefault();
 
     if (!editingProduct) return;
-
-    if (
-      !editForm.name ||
-      !editForm.sku ||
-      !editForm.description ||
-      !editForm.price
-    ) {
-      toast.error("Please fill name, SKU, description and price");
-      return;
-    }
+    if (!validateForm(editForm)) return;
 
     try {
       setUpdating(true);
 
-      const payload = {
-        name: editForm.name,
-        sku: editForm.sku,
-        description: editForm.description,
-        category: editForm.category,
-        material: editForm.material,
-        purity: editForm.purity,
-        price: Number(editForm.price),
-        compareAtPrice: Number(editForm.compareAtPrice || 0),
-        makingCharges: Number(editForm.makingCharges || 0),
-        taxRate: Number(editForm.taxRate || 3),
-        stock: Number(editForm.stock || 0),
-        sizes: editForm.sizes
-          ? editForm.sizes
-              .split(",")
-              .map((item) => item.trim())
-              .filter(Boolean)
-          : [],
-        images: editForm.imageUrl
-          ? [
-              {
-                url: editForm.imageUrl,
-                alt: editForm.name,
-                isPrimary: true,
-              },
-            ]
-          : [],
-        tags: editForm.tags
-          ? editForm.tags
-              .split(",")
-              .map((item) => item.trim())
-              .filter(Boolean)
-          : [],
-        isFeatured: editForm.isFeatured,
-        isReadyToShip: editForm.isReadyToShip,
-      };
-
-      await api.patch(`/products/admin/${editingProduct._id}`, payload);
+      await api.patch(
+        `/products/admin/${editingProduct._id}`,
+        buildPayload(editForm),
+      );
 
       toast.success("Product updated successfully");
 
@@ -322,8 +591,8 @@ export default function ManageProducts() {
             Manage Products
           </h1>
           <p className="mt-3 max-w-2xl text-stone-600">
-            Add jewellery products, manage pricing, stock, images and
-            visibility.
+            Add jewellery products with images, advanced details, pricing,
+            stock, specification table and visibility.
           </p>
         </div>
 
@@ -336,219 +605,26 @@ export default function ManageProducts() {
         </button>
       </div>
 
-      <div className="grid gap-8 xl:grid-cols-[0.85fr_1.15fr]">
-        <form
+      <div className="grid gap-8 xl:grid-cols-[0.95fr_1.05fr]">
+        <ProductForm
+          title="Add Product"
+          subtitle="Upload up to 4 images and add product details."
+          form={form}
+          mode="create"
+          creating={creating}
+          uploadingImage={uploadingImage}
+          onChange={handleChange}
           onSubmit={handleCreateProduct}
-          className="h-fit rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm"
-        >
-          <div className="mb-6 flex items-center gap-3">
-            <div className="grid h-12 w-12 place-items-center rounded-full bg-vjj-ivory text-vjj-bronze">
-              <Plus />
-            </div>
-
-            <div>
-              <h2 className="font-serif text-3xl font-bold">Add Product</h2>
-              <p className="text-sm text-stone-600">
-                Upload image and add product details.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-4">
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Product name"
-              className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-              required
-            />
-
-            <input
-              name="sku"
-              value={form.sku}
-              onChange={handleChange}
-              placeholder="SKU e.g. VJJ-RING-002"
-              className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-              required
-            />
-
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              placeholder="Product description"
-              rows="4"
-              className="resize-none rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-              required
-            />
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <select
-                name="category"
-                value={form.category}
-                onChange={handleChange}
-                className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-              >
-                {CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                name="material"
-                value={form.material}
-                onChange={handleChange}
-                className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-              >
-                <option value="Gold">Gold</option>
-                <option value="Diamond">Diamond</option>
-                <option value="Silver">Silver</option>
-                <option value="Platinum">Platinum</option>
-                <option value="Rose Gold">Rose Gold</option>
-                <option value="Gemstone">Gemstone</option>
-              </select>
-
-              <select
-                name="purity"
-                value={form.purity}
-                onChange={handleChange}
-                className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-              >
-                <option value="9KT">9KT</option>
-                <option value="14KT">14KT</option>
-                <option value="18KT">18KT</option>
-                <option value="22KT">22KT</option>
-                <option value="24KT">24KT</option>
-                <option value="925 Silver">925 Silver</option>
-              </select>
-
-              <input
-                name="stock"
-                value={form.stock}
-                onChange={handleChange}
-                placeholder="Stock"
-                type="number"
-                className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-              />
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <input
-                name="price"
-                value={form.price}
-                onChange={handleChange}
-                placeholder="Price"
-                type="number"
-                className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-                required
-              />
-
-              <input
-                name="compareAtPrice"
-                value={form.compareAtPrice}
-                onChange={handleChange}
-                placeholder="MRP"
-                type="number"
-                className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-              />
-
-              <input
-                name="makingCharges"
-                value={form.makingCharges}
-                onChange={handleChange}
-                placeholder="Making"
-                type="number"
-                className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-              />
-            </div>
-
-            <div className="rounded-2xl border border-black/10 bg-vjj-ivory p-4">
-              <label className="mb-3 block text-sm font-bold text-vjj-black">
-                Product Image
-              </label>
-
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/jpg,image/webp"
-                onChange={handleImageUpload}
-                className="w-full rounded-2xl bg-white px-4 py-3 text-sm"
-              />
-
-              {uploadingImage && (
-                <p className="mt-3 text-sm font-semibold text-vjj-bronze">
-                  Uploading image...
-                </p>
-              )}
-
-              {form.imageUrl && (
-                <div className="mt-4">
-                  <img
-                    src={form.imageUrl}
-                    alt="Uploaded product"
-                    className="h-40 w-40 rounded-2xl object-cover"
-                  />
-
-                  <input
-                    name="imageUrl"
-                    value={form.imageUrl}
-                    onChange={handleChange}
-                    placeholder="Image URL"
-                    className="mt-3 w-full rounded-2xl border border-black/10 bg-white px-5 py-3 text-sm outline-none focus:border-vjj-gold"
-                  />
-                </div>
-              )}
-            </div>
-
-            <input
-              name="sizes"
-              value={form.sizes}
-              onChange={handleChange}
-              placeholder="Sizes comma separated e.g. 12,14,16"
-              className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-            />
-
-            <input
-              name="tags"
-              value={form.tags}
-              onChange={handleChange}
-              placeholder="Tags comma separated e.g. gold,wedding,premium"
-              className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-            />
-
-            <div className="grid gap-3 rounded-2xl bg-vjj-ivory p-4">
-              <label className="flex items-center gap-3 text-sm font-semibold">
-                <input
-                  type="checkbox"
-                  name="isFeatured"
-                  checked={form.isFeatured}
-                  onChange={handleChange}
-                />
-                Featured / Signature Product
-              </label>
-
-              <label className="flex items-center gap-3 text-sm font-semibold">
-                <input
-                  type="checkbox"
-                  name="isReadyToShip"
-                  checked={form.isReadyToShip}
-                  onChange={handleChange}
-                />
-                Ready To Ship
-              </label>
-            </div>
-
-            <button
-              disabled={creating}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-vjj-black px-6 py-4 text-sm font-bold text-white transition hover:bg-vjj-bronze disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <Plus size={18} />
-              {creating ? "Creating..." : "Create Product"}
-            </button>
-          </div>
-        </form>
+          onImageUpload={handleImageUpload}
+          removeImage={removeImage}
+          setPrimaryImage={setPrimaryImage}
+          updateSpecGroupTitle={updateSpecGroupTitle}
+          updateSpecRow={updateSpecRow}
+          addSpecRow={addSpecRow}
+          removeSpecRow={removeSpecRow}
+          addSpecGroup={addSpecGroup}
+          removeSpecGroup={removeSpecGroup}
+        />
 
         <div className="rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm">
           <div className="mb-6 flex items-center justify-between gap-4">
@@ -585,9 +661,7 @@ export default function ManageProducts() {
           ) : (
             <div className="grid gap-4">
               {products.map((product) => {
-                const image =
-                  product.images?.[0]?.url ||
-                  "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=300&q=90";
+                const image = getProductImage(product);
 
                 return (
                   <div
@@ -595,7 +669,7 @@ export default function ManageProducts() {
                     className="flex flex-col gap-4 rounded-3xl border border-black/10 bg-vjj-ivory p-4 md:flex-row md:items-center"
                   >
                     <img
-                      src={`${image}?auto=format&fit=crop&w=220&q=90`}
+                      src={image}
                       alt={product.name}
                       className="h-24 w-24 rounded-2xl object-cover"
                     />
@@ -613,6 +687,7 @@ export default function ManageProducts() {
                         <span>SKU: {product.sku}</span>
                         <span>Stock: {product.stock}</span>
                         <span>{formatCurrency(product.price)}</span>
+                        <span>{product.images?.length || 0}/4 Images</span>
 
                         {product.isFeatured && (
                           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">
@@ -629,6 +704,16 @@ export default function ManageProducts() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
+                      <a
+                        href={`/products/${product.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-5 py-2.5 text-sm font-semibold text-vjj-black transition hover:bg-vjj-ivory"
+                      >
+                        <ExternalLink size={16} />
+                        View
+                      </a>
+
                       <button
                         onClick={() => openEditModal(product)}
                         className="inline-flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-5 py-2.5 text-sm font-semibold text-vjj-black transition hover:bg-vjj-black hover:text-white"
@@ -655,7 +740,7 @@ export default function ManageProducts() {
 
       {editingProduct && (
         <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/60 px-5 py-10 backdrop-blur-sm">
-          <div className="mx-auto max-w-4xl rounded-[2rem] bg-white p-6 shadow-2xl">
+          <div className="mx-auto max-w-5xl rounded-[2rem] bg-white p-6 shadow-2xl">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-bold uppercase tracking-[0.3em] text-vjj-bronze">
@@ -675,213 +760,584 @@ export default function ManageProducts() {
               </button>
             </div>
 
-            <form onSubmit={handleUpdateProduct} className="grid gap-4">
-              <input
-                name="name"
-                value={editForm.name}
-                onChange={handleEditChange}
-                placeholder="Product name"
-                className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-                required
+            <ProductForm
+              title=""
+              subtitle=""
+              form={editForm}
+              mode="edit"
+              creating={updating}
+              uploadingImage={uploadingEditImage}
+              onChange={handleEditChange}
+              onSubmit={handleUpdateProduct}
+              onImageUpload={handleEditImageUpload}
+              removeImage={removeImage}
+              setPrimaryImage={setPrimaryImage}
+              updateSpecGroupTitle={updateSpecGroupTitle}
+              updateSpecRow={updateSpecRow}
+              addSpecRow={addSpecRow}
+              removeSpecRow={removeSpecRow}
+              addSpecGroup={addSpecGroup}
+              removeSpecGroup={removeSpecGroup}
+              showHeader={false}
+            />
+
+            <button
+              type="button"
+              onClick={closeEditModal}
+              className="mt-4 w-full rounded-full border border-black/10 bg-white px-6 py-4 text-sm font-bold text-vjj-black transition hover:bg-vjj-ivory"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProductForm({
+  title,
+  subtitle,
+  form,
+  mode,
+  creating,
+  uploadingImage,
+  onChange,
+  onSubmit,
+  onImageUpload,
+  removeImage,
+  setPrimaryImage,
+  updateSpecGroupTitle,
+  updateSpecRow,
+  addSpecRow,
+  removeSpecRow,
+  addSpecGroup,
+  removeSpecGroup,
+  showHeader = true,
+}) {
+  return (
+    <form
+      onSubmit={onSubmit}
+      className="h-fit rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm"
+    >
+      {showHeader && (
+        <div className="mb-6 flex items-center gap-3">
+          <div className="grid h-12 w-12 place-items-center rounded-full bg-vjj-ivory text-vjj-bronze">
+            <Plus />
+          </div>
+
+          <div>
+            <h2 className="font-serif text-3xl font-bold">{title}</h2>
+            <p className="text-sm text-stone-600">{subtitle}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-6">
+        <FormSection title="Basic Details">
+          <input
+            name="name"
+            value={form.name}
+            onChange={onChange}
+            placeholder="Product name"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+            required
+          />
+
+          <input
+            name="sku"
+            value={form.sku}
+            onChange={onChange}
+            placeholder="SKU e.g. VJJ-RING-002"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+            required
+          />
+
+          <textarea
+            name="description"
+            value={form.description}
+            onChange={onChange}
+            placeholder="Short product description"
+            rows="3"
+            className="resize-none rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold md:col-span-2"
+            required
+          />
+
+          <textarea
+            name="longDescription"
+            value={form.longDescription}
+            onChange={onChange}
+            placeholder="Long product description for product details page"
+            rows="5"
+            className="resize-none rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold md:col-span-2"
+          />
+        </FormSection>
+
+        <FormSection title="Classification">
+          <select
+            name="category"
+            value={form.category}
+            onChange={onChange}
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+          >
+            {CATEGORIES.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+
+          <input
+            name="productType"
+            value={form.productType}
+            onChange={onChange}
+            placeholder="Product Type e.g. Drop Earrings"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+          />
+
+          <input
+            name="productCollection"
+            value={form.productCollection}
+            onChange={onChange}
+            placeholder="Collection e.g. Bridal / Daily Wear"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+          />
+
+          <input
+            name="gender"
+            value={form.gender}
+            onChange={onChange}
+            placeholder="Gender e.g. Women"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+          />
+
+          <input
+            name="occasion"
+            value={form.occasion}
+            onChange={onChange}
+            placeholder="Occasion e.g. Wedding / Office"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold md:col-span-2"
+          />
+        </FormSection>
+
+        <FormSection title="Metal & Weight">
+          <select
+            name="material"
+            value={form.material}
+            onChange={onChange}
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+          >
+            {materialOptions.map((material) => (
+              <option key={material} value={material}>
+                {material}
+              </option>
+            ))}
+          </select>
+
+          <select
+            name="purity"
+            value={form.purity}
+            onChange={onChange}
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+          >
+            {purityOptions.map((purity) => (
+              <option key={purity} value={purity}>
+                {purity}
+              </option>
+            ))}
+          </select>
+
+          <input
+            name="materialColor"
+            value={form.materialColor}
+            onChange={onChange}
+            placeholder="Material Colour e.g. Yellow"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+          />
+
+          <input
+            name="grossWeight"
+            value={form.grossWeight}
+            onChange={onChange}
+            placeholder="Gross Weight e.g. 4.25g"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+          />
+
+          <input
+            name="netWeight"
+            value={form.netWeight}
+            onChange={onChange}
+            placeholder="Net Weight e.g. 3.95g"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold md:col-span-2"
+          />
+        </FormSection>
+
+        <FormSection title="Price & Stock">
+          <input
+            name="price"
+            value={form.price}
+            onChange={onChange}
+            placeholder="Selling Price"
+            type="number"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+            required
+          />
+
+          <input
+            name="compareAtPrice"
+            value={form.compareAtPrice}
+            onChange={onChange}
+            placeholder="MRP / Compare Price"
+            type="number"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+          />
+
+          <input
+            name="makingCharge"
+            value={form.makingCharge}
+            onChange={onChange}
+            placeholder="Making Charge"
+            type="number"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+          />
+
+          <input
+            name="gstPercent"
+            value={form.gstPercent}
+            onChange={onChange}
+            placeholder="GST %"
+            type="number"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+          />
+
+          <input
+            name="stock"
+            value={form.stock}
+            onChange={onChange}
+            placeholder="Stock"
+            type="number"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold md:col-span-2"
+          />
+        </FormSection>
+
+        <ProductImagesSection
+          images={form.images}
+          mode={mode}
+          uploadingImage={uploadingImage}
+          onImageUpload={onImageUpload}
+          removeImage={removeImage}
+          setPrimaryImage={setPrimaryImage}
+        />
+
+        <FormSection title="Size, Tags & Highlights">
+          <input
+            name="sizes"
+            value={form.sizes}
+            onChange={onChange}
+            placeholder="Sizes comma separated e.g. 12,14,16"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+          />
+
+          <input
+            name="tags"
+            value={form.tags}
+            onChange={onChange}
+            placeholder="Tags comma separated e.g. gold,wedding,premium"
+            className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
+          />
+
+          <textarea
+            name="highlights"
+            value={form.highlights}
+            onChange={onChange}
+            placeholder="Highlights comma separated e.g. BIS Hallmarked, Premium Finish, Secure Packaging"
+            rows="3"
+            className="resize-none rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold md:col-span-2"
+          />
+        </FormSection>
+
+        <FormSection title="Care Instructions">
+          <textarea
+            name="careInstructions"
+            value={form.careInstructions}
+            onChange={onChange}
+            placeholder="Care instructions"
+            rows="4"
+            className="resize-none rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold md:col-span-2"
+          />
+        </FormSection>
+
+        <SpecificationEditor
+          groups={form.specificationGroups}
+          mode={mode}
+          updateSpecGroupTitle={updateSpecGroupTitle}
+          updateSpecRow={updateSpecRow}
+          addSpecRow={addSpecRow}
+          removeSpecRow={removeSpecRow}
+          addSpecGroup={addSpecGroup}
+          removeSpecGroup={removeSpecGroup}
+        />
+
+        <div className="grid gap-3 rounded-2xl bg-vjj-ivory p-4">
+          <label className="flex items-center gap-3 text-sm font-semibold">
+            <input
+              type="checkbox"
+              name="isFeatured"
+              checked={form.isFeatured}
+              onChange={onChange}
+            />
+            Featured / Signature Product
+          </label>
+
+          <label className="flex items-center gap-3 text-sm font-semibold">
+            <input
+              type="checkbox"
+              name="isReadyToShip"
+              checked={form.isReadyToShip}
+              onChange={onChange}
+            />
+            Ready To Ship
+          </label>
+        </div>
+
+        <button
+          disabled={creating}
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-vjj-black px-6 py-4 text-sm font-bold text-white transition hover:bg-vjj-bronze disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <Plus size={18} />
+          {creating
+            ? mode === "edit"
+              ? "Updating..."
+              : "Creating..."
+            : mode === "edit"
+              ? "Update Product"
+              : "Create Product"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function FormSection({ title, children }) {
+  return (
+    <div className="rounded-[1.5rem] border border-black/10 bg-white p-4">
+      <h3 className="mb-4 flex items-center gap-2 font-serif text-2xl font-bold text-vjj-black">
+        <Layers size={20} className="text-vjj-bronze" />
+        {title}
+      </h3>
+
+      <div className="grid gap-4 md:grid-cols-2">{children}</div>
+    </div>
+  );
+}
+
+function ProductImagesSection({
+  images,
+  mode,
+  uploadingImage,
+  onImageUpload,
+  removeImage,
+  setPrimaryImage,
+}) {
+  return (
+    <div className="rounded-[1.5rem] border border-black/10 bg-vjj-ivory p-4">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div>
+          <h3 className="font-serif text-2xl font-bold text-vjj-black">
+            Product Images
+          </h3>
+          <p className="mt-1 text-sm text-stone-600">
+            Upload maximum 4 images. First/primary image appears first.
+          </p>
+        </div>
+
+        <span className="rounded-full bg-white px-4 py-2 text-sm font-bold text-vjj-bronze">
+          {images.length}/4
+        </span>
+      </div>
+
+      <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-vjj-bronze/50 bg-white px-5 py-8 text-center transition hover:bg-vjj-ivory">
+        <ImagePlus className="text-vjj-bronze" size={34} />
+        <p className="mt-3 font-bold text-vjj-black">
+          {uploadingImage ? "Uploading..." : "Upload Images"}
+        </p>
+        <p className="mt-1 text-sm text-stone-500">
+          JPG, PNG, WEBP. You can select multiple images.
+        </p>
+
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/jpg,image/webp"
+          multiple
+          disabled={uploadingImage || images.length >= 4}
+          onChange={onImageUpload}
+          className="hidden"
+        />
+      </label>
+
+      {images.length > 0 && (
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          {images.map((image, index) => (
+            <div
+              key={`${image.url}-${index}`}
+              className="rounded-2xl border border-black/10 bg-white p-3"
+            >
+              <img
+                src={image.url}
+                alt={image.alt || "Product"}
+                className="h-44 w-full rounded-xl object-cover"
               />
 
-              <input
-                name="sku"
-                value={editForm.sku}
-                onChange={handleEditChange}
-                placeholder="SKU"
-                className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-                required
-              />
-
-              <textarea
-                name="description"
-                value={editForm.description}
-                onChange={handleEditChange}
-                placeholder="Product description"
-                rows="4"
-                className="resize-none rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-                required
-              />
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <select
-                  name="category"
-                  value={editForm.category}
-                  onChange={handleEditChange}
-                  className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-                >
-                  {CATEGORIES.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  name="material"
-                  value={editForm.material}
-                  onChange={handleEditChange}
-                  className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-                >
-                  <option value="Gold">Gold</option>
-                  <option value="Diamond">Diamond</option>
-                  <option value="Silver">Silver</option>
-                  <option value="Platinum">Platinum</option>
-                  <option value="Rose Gold">Rose Gold</option>
-                  <option value="Gemstone">Gemstone</option>
-                </select>
-
-                <select
-                  name="purity"
-                  value={editForm.purity}
-                  onChange={handleEditChange}
-                  className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-                >
-                  <option value="9KT">9KT</option>
-                  <option value="14KT">14KT</option>
-                  <option value="18KT">18KT</option>
-                  <option value="22KT">22KT</option>
-                  <option value="24KT">24KT</option>
-                  <option value="925 Silver">925 Silver</option>
-                </select>
-
-                <input
-                  name="stock"
-                  value={editForm.stock}
-                  onChange={handleEditChange}
-                  placeholder="Stock"
-                  type="number"
-                  className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-                />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <input
-                  name="price"
-                  value={editForm.price}
-                  onChange={handleEditChange}
-                  placeholder="Price"
-                  type="number"
-                  className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-                  required
-                />
-
-                <input
-                  name="compareAtPrice"
-                  value={editForm.compareAtPrice}
-                  onChange={handleEditChange}
-                  placeholder="MRP"
-                  type="number"
-                  className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-                />
-
-                <input
-                  name="makingCharges"
-                  value={editForm.makingCharges}
-                  onChange={handleEditChange}
-                  placeholder="Making"
-                  type="number"
-                  className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-                />
-              </div>
-
-              <div className="rounded-2xl border border-black/10 bg-vjj-ivory p-4">
-                <label className="mb-3 block text-sm font-bold text-vjj-black">
-                  Product Image
-                </label>
-
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={handleEditImageUpload}
-                  className="w-full rounded-2xl bg-white px-4 py-3 text-sm"
-                />
-
-                {uploadingEditImage && (
-                  <p className="mt-3 text-sm font-semibold text-vjj-bronze">
-                    Uploading image...
-                  </p>
-                )}
-
-                {editForm.imageUrl && (
-                  <div className="mt-4">
-                    <img
-                      src={editForm.imageUrl}
-                      alt="Uploaded product"
-                      className="h-40 w-40 rounded-2xl object-cover"
-                    />
-
-                    <input
-                      name="imageUrl"
-                      value={editForm.imageUrl}
-                      onChange={handleEditChange}
-                      placeholder="Image URL"
-                      className="mt-3 w-full rounded-2xl border border-black/10 bg-white px-5 py-3 text-sm outline-none focus:border-vjj-gold"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <input
-                name="sizes"
-                value={editForm.sizes}
-                onChange={handleEditChange}
-                placeholder="Sizes comma separated e.g. 12,14,16"
-                className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-              />
-
-              <input
-                name="tags"
-                value={editForm.tags}
-                onChange={handleEditChange}
-                placeholder="Tags comma separated e.g. gold,wedding,premium"
-                className="rounded-2xl border border-black/10 px-5 py-3 outline-none focus:border-vjj-gold"
-              />
-
-              <div className="grid gap-3 rounded-2xl bg-vjj-ivory p-4">
-                <label className="flex items-center gap-3 text-sm font-semibold">
-                  <input
-                    type="checkbox"
-                    name="isFeatured"
-                    checked={editForm.isFeatured}
-                    onChange={handleEditChange}
-                  />
-                  Featured / Signature Product
-                </label>
-
-                <label className="flex items-center gap-3 text-sm font-semibold">
-                  <input
-                    type="checkbox"
-                    name="isReadyToShip"
-                    checked={editForm.isReadyToShip}
-                    onChange={handleEditChange}
-                  />
-                  Ready To Ship
-                </label>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button
-                  disabled={updating}
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-vjj-black px-6 py-4 text-sm font-bold text-white transition hover:bg-vjj-bronze disabled:cursor-not-allowed disabled:opacity-60"
+                  type="button"
+                  onClick={() => setPrimaryImage(index, mode)}
+                  className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold ${
+                    image.isPrimary
+                      ? "bg-vjj-black text-vjj-champagne"
+                      : "bg-vjj-ivory text-vjj-black"
+                  }`}
                 >
-                  <Pencil size={18} />
-                  {updating ? "Updating..." : "Update Product"}
+                  {image.isPrimary ? (
+                    <CheckCircle2 size={14} />
+                  ) : (
+                    <Star size={14} />
+                  )}
+                  {image.isPrimary ? "Primary" : "Set Primary"}
                 </button>
 
                 <button
                   type="button"
-                  onClick={closeEditModal}
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-6 py-4 text-sm font-bold text-vjj-black transition hover:bg-vjj-ivory"
+                  onClick={() => removeImage(index, mode)}
+                  className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700"
                 >
-                  Cancel
+                  <Trash2 size={14} />
+                  Remove
                 </button>
               </div>
-            </form>
-          </div>
+            </div>
+          ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function SpecificationEditor({
+  groups,
+  mode,
+  updateSpecGroupTitle,
+  updateSpecRow,
+  addSpecRow,
+  removeSpecRow,
+  addSpecGroup,
+  removeSpecGroup,
+}) {
+  return (
+    <div className="rounded-[1.5rem] border border-black/10 bg-white p-4">
+      <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <div>
+          <h3 className="font-serif text-2xl font-bold text-vjj-black">
+            Product Specification Table
+          </h3>
+          <p className="mt-1 text-sm text-stone-600">
+            These details will appear on the single product page.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => addSpecGroup(mode)}
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-vjj-black px-4 py-2 text-sm font-bold text-white"
+        >
+          <Plus size={16} />
+          Add Group
+        </button>
+      </div>
+
+      <div className="grid gap-5">
+        {groups.map((group, groupIndex) => (
+          <div
+            key={`${group.title}-${groupIndex}`}
+            className="rounded-2xl border border-black/10 bg-vjj-ivory p-4"
+          >
+            <div className="mb-4 flex gap-3">
+              <input
+                value={group.title}
+                onChange={(event) =>
+                  updateSpecGroupTitle(groupIndex, event.target.value, mode)
+                }
+                placeholder="Group title e.g. Metal Details"
+                className="flex-1 rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-vjj-gold"
+              />
+
+              <button
+                type="button"
+                onClick={() => removeSpecGroup(groupIndex, mode)}
+                className="rounded-full bg-red-50 p-3 text-red-700"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+
+            <div className="grid gap-3">
+              {group.rows.map((row, rowIndex) => (
+                <div
+                  key={`${row.label}-${rowIndex}`}
+                  className="grid gap-3 md:grid-cols-[0.9fr_1.1fr_auto]"
+                >
+                  <input
+                    value={row.label}
+                    onChange={(event) =>
+                      updateSpecRow(
+                        groupIndex,
+                        rowIndex,
+                        "label",
+                        event.target.value,
+                        mode,
+                      )
+                    }
+                    placeholder="Label e.g. Gross Weight"
+                    className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-vjj-gold"
+                  />
+
+                  <input
+                    value={row.value}
+                    onChange={(event) =>
+                      updateSpecRow(
+                        groupIndex,
+                        rowIndex,
+                        "value",
+                        event.target.value,
+                        mode,
+                      )
+                    }
+                    placeholder="Value e.g. 4.25g"
+                    className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-vjj-gold"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => removeSpecRow(groupIndex, rowIndex, mode)}
+                    className="rounded-full bg-red-50 px-4 py-3 text-red-700"
+                  >
+                    <Trash2 size={17} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => addSpecRow(groupIndex, mode)}
+              className="mt-4 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-bold text-vjj-black"
+            >
+              <Plus size={15} />
+              Add Row
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
