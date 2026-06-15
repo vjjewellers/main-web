@@ -79,7 +79,6 @@ export const fetchCart = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await api.get("/cart");
-      console.log("FETCH CART RESPONSE:", data);
 
       return getServerCartItems(data);
     } catch (error) {
@@ -103,8 +102,6 @@ export const addCartItem = createAsyncThunk(
         selectedSize,
         selectedMaterial,
       });
-
-      console.log("ADD CART RESPONSE:", data);
 
       return getServerCartItems(data);
     } catch (error) {
@@ -172,8 +169,6 @@ export const mergeGuestCart = createAsyncThunk(
       const guestItems =
         JSON.parse(localStorage.getItem("vjj_guest_cart")) || [];
 
-      console.log("GUEST CART BEFORE MERGE:", guestItems);
-
       if (guestItems.length > 0) {
         for (const item of guestItems) {
           await api.post("/cart/add", {
@@ -188,8 +183,6 @@ export const mergeGuestCart = createAsyncThunk(
       }
 
       const { data } = await api.get("/cart");
-
-      console.log("MERGED CART RESPONSE:", data);
 
       return getServerCartItems(data);
     } catch (error) {

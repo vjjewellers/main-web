@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -9,9 +10,12 @@ import {
   Store,
   LogOut,
   Home,
+  ShieldAlert,
+  Loader2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
+import api from "../../services/api";
 import { logout } from "../../features/auth/authSlice";
 
 const navItems = [
@@ -42,28 +46,86 @@ const navItems = [
   },
 ];
 
+const isAdminUser = (user) => {
+  const role = String(user?.role || "").toLowerCase();
+
+  return role === "admin" || role === "super_admin" || role === "superadmin";
+};
+
 export default function AdminLayout() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const { user } = useSelector((state) => state.auth);
 
-  const isAdmin =
-    user?.role === "admin" ||
-    user?.role === "super_admin" ||
-    user?.role === "superadmin";
+  const [checking, setChecking] = useState(true);
+  const [verifiedUser, setVerifiedUser] = useState(user || null);
+
+  useEffect(() => {
+    const verifyAdmin = async () => {
+      try {
+        const token = localStorage.getItem("vjj_token");
+
+        if (!token) {
+          setVerifiedUser(null);
+          return;
+        }
+
+        if (user) {
+          setVerifiedUser(user);
+          return;
+        }
+
+        const { data } = await api.get("/auth/me");
+        const freshUser = data.user || data;
+
+        setVerifiedUser(freshUser);
+      } catch (error) {
+        setVerifiedUser(null);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    verifyAdmin();
+  }, [user]);
 
   const handleLogout = () => {
     dispatch(logout());
+    localStorage.removeItem("vjj_token");
     toast.success("Logged out successfully");
     navigate("/login");
   };
 
-  if (!user) {
+  if (checking) {
+    return (
+      <section className="grid min-h-screen place-items-center bg-vjj-ivory px-5">
+        <div className="rounded-[2rem] border border-black/10 bg-white p-8 text-center shadow-luxury">
+          <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-vjj-black text-vjj-champagne">
+            <Loader2 className="animate-spin" size={30} />
+          </div>
+
+          <h1 className="mt-5 font-serif text-3xl font-bold text-vjj-black">
+            Checking Admin Access
+          </h1>
+
+          <p className="mt-2 text-sm text-stone-600">
+            Please wait while we verify your session.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  if (!verifiedUser) {
     return (
       <section className="grid min-h-screen place-items-center bg-vjj-ivory px-5">
         <div className="max-w-md rounded-[2rem] border border-black/10 bg-white p-8 text-center shadow-luxury">
-          <h1 className="font-serif text-4xl font-bold text-vjj-black">
+          <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-red-50 text-red-700">
+            <ShieldAlert size={32} />
+          </div>
+
+          <h1 className="mt-5 font-serif text-4xl font-bold text-vjj-black">
             Login Required
           </h1>
 
@@ -82,11 +144,15 @@ export default function AdminLayout() {
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdminUser(verifiedUser)) {
     return (
       <section className="grid min-h-screen place-items-center bg-vjj-ivory px-5">
         <div className="max-w-md rounded-[2rem] border border-black/10 bg-white p-8 text-center shadow-luxury">
-          <h1 className="font-serif text-4xl font-bold text-vjj-black">
+          <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-red-50 text-red-700">
+            <ShieldAlert size={32} />
+          </div>
+
+          <h1 className="mt-5 font-serif text-4xl font-bold text-vjj-black">
             Access Denied
           </h1>
 
