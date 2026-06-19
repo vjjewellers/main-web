@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -7,9 +8,9 @@ import {
   LogOut,
   Menu,
   Package,
+  Phone,
   Search,
   ShieldCheck,
-  ShoppingBag,
   Sparkles,
   User,
   X,
@@ -17,7 +18,6 @@ import {
 import toast from "react-hot-toast";
 
 import { logout } from "../../features/auth/authSlice";
-import { selectCartCount } from "../../features/cart/cartSlice";
 import { selectWishlistCount } from "../../features/wishlist/wishlistSlice";
 import { BRAND } from "../../utils/constants";
 
@@ -25,7 +25,7 @@ const navLinks = [
   { label: "Home", href: "/", icon: HomeIcon },
   { label: "Products", href: "/products", icon: Package },
   { label: "Wishlist", href: "/wishlist", icon: Heart },
-  { label: "My Orders", href: "/dashboard", icon: User },
+  { label: "My Account", href: "/dashboard", icon: User },
 ];
 
 const isAdminUser = (user) => {
@@ -38,7 +38,6 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   const { user } = useSelector((state) => state.auth);
-  const cartCount = useSelector(selectCartCount);
   const wishlistCount = useSelector(selectWishlistCount);
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -55,11 +54,7 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
 
     return () => {
       document.body.style.overflow = "";
@@ -92,28 +87,28 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`sticky top-0 z-50 border-b border-blue-100/70 bg-white/95 px-4 py-3 transition-all duration-300 sm:px-5 lg:px-8 ${
-          scrolled ? "shadow-[0_14px_40px_rgba(15,23,42,0.08)]" : ""
+        className={`sticky top-0 z-50 border-b border-vjj-champagne bg-vjj-cream/95 px-4 py-3 transition-all duration-300 sm:px-5 lg:px-8 ${
+          scrolled ? "shadow-[0_14px_40px_rgba(52,34,23,0.10)]" : ""
         }`}
       >
         <div className="mx-auto max-w-[1500px]">
           <div className="flex items-center justify-between gap-4">
             <Link to="/" className="flex min-w-0 items-center gap-3">
-              <div className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-sky-400 text-white shadow-lg shadow-blue-500/20 sm:h-12 sm:w-12">
+              <div className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-vjj-gold to-vjj-bronze text-white shadow-lg shadow-vjj-gold/20 sm:h-12 sm:w-12">
                 <Sparkles size={22} />
               </div>
 
               <div className="min-w-0">
-                <p className="truncate font-serif text-xl font-bold leading-none text-slate-950 sm:text-2xl">
+                <p className="truncate font-serif text-xl font-bold leading-none text-vjj-black sm:text-2xl">
                   {BRAND.displayName}
                 </p>
-                <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-[0.2em] text-blue-600 sm:text-[11px]">
-                  Verma ji jewellers
+                <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-[0.2em] text-vjj-gold sm:text-[11px]">
+                  Verma Ji Jewellers
                 </p>
               </div>
             </Link>
 
-            <nav className="hidden items-center gap-1 rounded-full border border-blue-100 bg-blue-50/70 p-1 lg:flex">
+            <nav className="hidden items-center gap-1 rounded-full border border-vjj-champagne bg-vjj-soft p-1 lg:flex">
               {navLinks.map((item) => {
                 const Icon = item.icon;
 
@@ -125,8 +120,8 @@ export default function Navbar() {
                     className={({ isActive }) =>
                       `inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition ${
                         isActive
-                          ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                          : "text-slate-700 hover:bg-white hover:text-blue-700"
+                          ? "bg-vjj-espresso text-vjj-champagne shadow-md shadow-vjj-gold/20"
+                          : "text-vjj-coffee hover:bg-white hover:text-vjj-black"
                       }`
                     }
                   >
@@ -142,8 +137,8 @@ export default function Navbar() {
                   className={({ isActive }) =>
                     `inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition ${
                       isActive
-                        ? "bg-slate-950 text-white"
-                        : "text-slate-700 hover:bg-white hover:text-slate-950"
+                        ? "bg-vjj-black text-vjj-champagne"
+                        : "text-vjj-coffee hover:bg-white hover:text-vjj-black"
                     }`
                   }
                 >
@@ -155,40 +150,35 @@ export default function Navbar() {
 
             <form
               onSubmit={handleSearch}
-              className="hidden min-w-[230px] items-center gap-2 rounded-full border border-blue-100 bg-blue-50/70 px-4 py-2.5 xl:flex"
+              className="hidden min-w-[235px] items-center gap-2 rounded-full border border-vjj-champagne bg-vjj-soft px-4 py-2.5 xl:flex"
             >
-              <Search size={17} className="text-slate-400" />
+              <Search size={17} className="text-vjj-coffee" />
               <input
                 value={searchText}
                 onChange={(event) => setSearchText(event.target.value)}
                 placeholder="Search jewellery..."
-                className="w-full bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-400"
+                className="w-full bg-transparent text-sm font-semibold text-vjj-black outline-none placeholder:text-vjj-coffee/70"
               />
             </form>
 
             <div className="flex items-center gap-2">
+              <a
+                href={`tel:${BRAND.phone}`}
+                className="hidden h-11 items-center justify-center gap-2 rounded-full border border-vjj-champagne bg-vjj-soft px-4 text-sm font-bold text-vjj-black transition hover:bg-vjj-gold hover:text-white md:inline-flex"
+              >
+                <Phone size={17} />
+                Call
+              </a>
+
               <Link
                 to="/wishlist"
-                className="relative grid h-10 w-10 place-items-center rounded-full border border-blue-100 bg-blue-50 text-slate-900 transition hover:bg-blue-600 hover:text-white sm:h-11 sm:w-11"
+                className="relative grid h-10 w-10 place-items-center rounded-full border border-vjj-champagne bg-vjj-soft text-vjj-black transition hover:bg-vjj-gold hover:text-white sm:h-11 sm:w-11"
                 aria-label="Wishlist"
               >
                 <Heart size={19} />
                 {wishlistCount > 0 && (
-                  <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
+                  <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-vjj-espresso px-1 text-[10px] font-bold text-vjj-champagne">
                     {wishlistCount}
-                  </span>
-                )}
-              </Link>
-
-              <Link
-                to="/cart"
-                className="relative grid h-10 w-10 place-items-center rounded-full border border-blue-100 bg-blue-50 text-slate-900 transition hover:bg-blue-600 hover:text-white sm:h-11 sm:w-11"
-                aria-label="Cart"
-              >
-                <ShoppingBag size={19} />
-                {cartCount > 0 && (
-                  <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white">
-                    {cartCount}
                   </span>
                 )}
               </Link>
@@ -205,7 +195,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   to="/login"
-                  className="hidden rounded-full bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 md:inline-flex"
+                  className="hidden rounded-full bg-vjj-espresso px-5 py-2.5 text-sm font-bold text-vjj-champagne shadow-md shadow-vjj-gold/20 transition hover:bg-vjj-gold hover:text-white md:inline-flex"
                 >
                   Login
                 </Link>
@@ -214,7 +204,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setMobileOpen(true)}
-                className="grid h-10 w-10 place-items-center rounded-full border border-blue-100 bg-blue-600 text-white shadow-md shadow-blue-500/20 lg:hidden"
+                className="grid h-10 w-10 place-items-center rounded-full border border-vjj-gold bg-vjj-espresso text-vjj-champagne shadow-md shadow-vjj-gold/20 lg:hidden"
                 aria-label="Open menu"
               >
                 <Menu size={22} />
@@ -224,172 +214,219 @@ export default function Navbar() {
         </div>
       </header>
 
-      {mobileOpen && (
-        <div className="fixed inset-0 z-[100] lg:hidden">
-          <button
-            type="button"
-            aria-label="Close menu overlay"
-            onClick={() => setMobileOpen(false)}
-            className="absolute inset-0 bg-slate-950/45"
-          />
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            className="fixed inset-0 z-[100] lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+          >
+            <motion.button
+              type="button"
+              aria-label="Close menu overlay"
+              onClick={() => setMobileOpen(false)}
+              className="absolute inset-0 bg-vjj-black/65"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22 }}
+            />
 
-          <aside className="absolute right-0 top-0 flex h-full w-[88%] max-w-sm flex-col bg-white shadow-2xl">
-            <div className="border-b border-blue-100 bg-gradient-to-br from-blue-50 via-white to-sky-50 p-5">
-              <div className="flex items-start justify-between gap-4">
-                <Link
-                  to="/"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex min-w-0 items-center gap-3"
-                >
-                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-blue-600 text-white">
-                    <Sparkles size={22} />
-                  </div>
-
-                  <div className="min-w-0">
-                    <p className="truncate font-serif text-2xl font-bold text-slate-950">
-                      {BRAND.displayName}
-                    </p>
-                    <p className="mt-1 text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
-                      Jewellery Store
-                    </p>
-                  </div>
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={() => setMobileOpen(false)}
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-slate-950 shadow-sm"
-                >
-                  <X size={21} />
-                </button>
-              </div>
-
-              {user ? (
-                <div className="mt-5 rounded-2xl border border-blue-100 bg-white p-4">
-                  <p className="text-sm font-bold text-slate-950">
-                    {user.name || "User"}
-                  </p>
-                  <p className="mt-1 break-all text-xs text-slate-500">
-                    {user.email}
-                  </p>
-                </div>
-              ) : (
-                <Link
-                  to="/login"
-                  onClick={() => setMobileOpen(false)}
-                  className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-5 py-3 text-sm font-bold text-white"
-                >
-                  Login / Register
-                </Link>
-              )}
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-5">
-              <form onSubmit={handleSearch}>
-                <div className="flex items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
-                  <Search size={17} className="text-slate-400" />
-                  <input
-                    value={searchText}
-                    onChange={(event) => setSearchText(event.target.value)}
-                    placeholder="Search jewellery..."
-                    className="w-full bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-400"
-                  />
-                </div>
-              </form>
-
-              <div className="mt-6 grid gap-2">
-                {navLinks.map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <NavLink
-                      key={item.href}
-                      to={item.href}
-                      end={item.href === "/"}
-                      onClick={() => setMobileOpen(false)}
-                      className={({ isActive }) =>
-                        `flex items-center justify-between rounded-2xl px-4 py-4 text-sm font-bold transition ${
-                          isActive
-                            ? "bg-blue-600 text-white"
-                            : "bg-slate-50 text-slate-800 hover:bg-blue-50 hover:text-blue-700"
-                        }`
-                      }
-                    >
-                      <span className="flex items-center gap-3">
-                        <Icon size={19} />
-                        {item.label}
-                      </span>
-
-                      {item.href === "/wishlist" && wishlistCount > 0 && (
-                        <span className="rounded-full bg-white/20 px-2 py-1 text-xs">
-                          {wishlistCount}
-                        </span>
-                      )}
-                    </NavLink>
-                  );
-                })}
-
-                <NavLink
-                  to="/cart"
-                  onClick={() => setMobileOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center justify-between rounded-2xl px-4 py-4 text-sm font-bold transition ${
-                      isActive
-                        ? "bg-blue-600 text-white"
-                        : "bg-slate-50 text-slate-800 hover:bg-blue-50 hover:text-blue-700"
-                    }`
-                  }
-                >
-                  <span className="flex items-center gap-3">
-                    <ShoppingBag size={19} />
-                    Cart
-                  </span>
-
-                  {cartCount > 0 && (
-                    <span className="rounded-full bg-white/20 px-2 py-1 text-xs">
-                      {cartCount}
-                    </span>
-                  )}
-                </NavLink>
-
-                {isAdminUser(user) && (
-                  <NavLink
-                    to="/admin"
+            <motion.aside
+              className="absolute right-0 top-0 flex h-full w-[88%] max-w-sm flex-col bg-vjj-cream shadow-2xl"
+              initial={{ x: "100%", opacity: 0.9 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0.9 }}
+              transition={{
+                type: "spring",
+                stiffness: 310,
+                damping: 32,
+                mass: 0.9,
+              }}
+            >
+              <div className="border-b border-vjj-champagne bg-gradient-to-br from-vjj-soft via-vjj-cream to-white p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <Link
+                    to="/"
                     onClick={() => setMobileOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-2xl px-4 py-4 text-sm font-bold transition ${
-                        isActive
-                          ? "bg-slate-950 text-white"
-                          : "bg-slate-100 text-slate-800 hover:bg-slate-200"
-                      }`
-                    }
+                    className="flex min-w-0 items-center gap-3"
                   >
-                    <ShieldCheck size={19} />
-                    Admin Panel
-                  </NavLink>
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-vjj-espresso text-vjj-champagne">
+                      <Sparkles size={22} />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="truncate font-serif text-2xl font-bold text-vjj-black">
+                        {BRAND.displayName}
+                      </p>
+                      <p className="mt-1 text-xs font-bold uppercase tracking-[0.2em] text-vjj-gold">
+                        Jewellery Store
+                      </p>
+                    </div>
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => setMobileOpen(false)}
+                    className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-vjj-black shadow-sm transition hover:bg-vjj-soft"
+                  >
+                    <X size={21} />
+                  </button>
+                </div>
+
+                {user ? (
+                  <div className="mt-5 rounded-2xl border border-vjj-champagne bg-white p-4">
+                    <p className="text-sm font-bold text-vjj-black">
+                      {user.name || "User"}
+                    </p>
+                    <p className="mt-1 break-all text-xs text-vjj-coffee">
+                      {user.email}
+                    </p>
+                  </div>
+                ) : (
+                  <Link
+                    to="/login"
+                    onClick={() => setMobileOpen(false)}
+                    className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-vjj-espresso px-5 py-3 text-sm font-bold text-vjj-champagne transition hover:bg-vjj-gold hover:text-white"
+                  >
+                    Login / Register
+                  </Link>
                 )}
               </div>
-            </div>
 
-            <div className="border-t border-blue-100 p-5">
-              {user ? (
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-red-50 px-5 py-3 text-sm font-bold text-red-700 transition hover:bg-red-100"
+              <div className="flex-1 overflow-y-auto p-5">
+                <form onSubmit={handleSearch}>
+                  <div className="flex items-center gap-2 rounded-2xl border border-vjj-champagne bg-vjj-soft px-4 py-3">
+                    <Search size={17} className="text-vjj-coffee" />
+                    <input
+                      value={searchText}
+                      onChange={(event) => setSearchText(event.target.value)}
+                      placeholder="Search jewellery..."
+                      className="w-full bg-transparent text-sm font-semibold text-vjj-black outline-none placeholder:text-vjj-coffee/70"
+                    />
+                  </div>
+                </form>
+
+                <motion.div
+                  className="mt-6 grid gap-2"
+                  initial="hidden"
+                  animate="show"
+                  exit="hidden"
+                  variants={{
+                    hidden: {},
+                    show: {
+                      transition: {
+                        staggerChildren: 0.045,
+                        delayChildren: 0.08,
+                      },
+                    },
+                  }}
                 >
-                  <LogOut size={17} />
-                  Logout
-                </button>
-              ) : (
-                <p className="text-center text-xs leading-5 text-slate-500">
-                  Login to save wishlist, cart and view your order history.
-                </p>
-              )}
-            </div>
-          </aside>
-        </div>
-      )}
+                  {navLinks.map((item) => {
+                    const Icon = item.icon;
+
+                    return (
+                      <motion.div
+                        key={item.href}
+                        variants={{
+                          hidden: { opacity: 0, x: 24 },
+                          show: { opacity: 1, x: 0 },
+                        }}
+                        transition={{ duration: 0.22 }}
+                      >
+                        <NavLink
+                          to={item.href}
+                          end={item.href === "/"}
+                          onClick={() => setMobileOpen(false)}
+                          className={({ isActive }) =>
+                            `flex items-center justify-between rounded-2xl px-4 py-4 text-sm font-bold transition ${
+                              isActive
+                                ? "bg-vjj-espresso text-vjj-champagne"
+                                : "bg-white text-vjj-black hover:bg-vjj-soft"
+                            }`
+                          }
+                        >
+                          <span className="flex items-center gap-3">
+                            <Icon size={19} />
+                            {item.label}
+                          </span>
+
+                          {item.href === "/wishlist" && wishlistCount > 0 && (
+                            <span className="rounded-full bg-vjj-gold px-2 py-1 text-xs text-white">
+                              {wishlistCount}
+                            </span>
+                          )}
+                        </NavLink>
+                      </motion.div>
+                    );
+                  })}
+
+                  <motion.div
+                    variants={{
+                      hidden: { opacity: 0, x: 24 },
+                      show: { opacity: 1, x: 0 },
+                    }}
+                    transition={{ duration: 0.22 }}
+                  >
+                    <a
+                      href={`tel:${BRAND.phone}`}
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 rounded-2xl bg-white px-4 py-4 text-sm font-bold text-vjj-black transition hover:bg-vjj-soft"
+                    >
+                      <Phone size={19} />
+                      Call Store
+                    </a>
+                  </motion.div>
+
+                  {isAdminUser(user) && (
+                    <motion.div
+                      variants={{
+                        hidden: { opacity: 0, x: 24 },
+                        show: { opacity: 1, x: 0 },
+                      }}
+                      transition={{ duration: 0.22 }}
+                    >
+                      <NavLink
+                        to="/admin"
+                        onClick={() => setMobileOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 rounded-2xl px-4 py-4 text-sm font-bold transition ${
+                            isActive
+                              ? "bg-vjj-black text-vjj-champagne"
+                              : "bg-vjj-soft text-vjj-black hover:bg-vjj-champagne"
+                          }`
+                        }
+                      >
+                        <ShieldCheck size={19} />
+                        Admin Panel
+                      </NavLink>
+                    </motion.div>
+                  )}
+                </motion.div>
+              </div>
+
+              <div className="border-t border-vjj-champagne p-5">
+                {user ? (
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-red-50 px-5 py-3 text-sm font-bold text-red-700 transition hover:bg-red-100"
+                  >
+                    <LogOut size={17} />
+                    Logout
+                  </button>
+                ) : (
+                  <p className="text-center text-xs leading-5 text-vjj-coffee">
+                    Login to save wishlist and view your account details.
+                  </p>
+                )}
+              </div>
+            </motion.aside>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

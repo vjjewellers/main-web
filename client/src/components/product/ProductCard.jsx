@@ -218,7 +218,7 @@ Kindly share more details.`;
               event.stopPropagation();
               navigate(productUrl);
             }}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-vjj-black px-4 py-3 text-xs font-bold text-white transition hover:bg-vjj-bronze"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-vjj-espresso px-4 py-3 text-xs font-bold text-vjj-champagne transition hover:bg-vjj-gold hover:text-white"
           >
             <Eye size={16} />
             Details
@@ -227,7 +227,7 @@ Kindly share more details.`;
           <button
             type="button"
             onClick={handleWhatsAppEnquiry}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-green-600 bg-green-50 px-4 py-3 text-xs font-bold text-green-700 transition hover:bg-green-600 hover:text-white"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-vjj-gold bg-vjj-soft px-4 py-3 text-xs font-bold text-vjj-black transition hover:bg-vjj-gold hover:text-white"
           >
             <MessageCircle size={16} />
             Enquire

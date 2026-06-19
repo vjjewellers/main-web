@@ -46,21 +46,21 @@ export default function Footer() {
           <div className="grid gap-8 p-6 md:p-8 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1fr]">
             <div>
               <Link to="/" className="flex items-center gap-3">
-                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-sky-400 text-white shadow-lg shadow-blue-500/20">
+                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-sky-400 text-white shadow-lg shadow-vjj-gold/20">
                   <Sparkles size={26} />
                 </div>
 
                 <div>
-                  <p className="font-serif text-3xl font-bold leading-none text-slate-950">
+                  <p className="font-serif text-3xl font-bold leading-none text-vjj-black">
                     {BRAND.displayName}
                   </p>
-                  <p className="mt-1 text-xs font-bold uppercase tracking-[0.22em] text-blue-600">
+                  <p className="mt-1 text-xs font-bold uppercase tracking-[0.22em] text-vjj-gold">
                     Verma ji jewellers
                   </p>
                 </div>
               </Link>
 
-              <p className="mt-5 max-w-sm text-sm leading-7 text-slate-600">
+              <p className="mt-5 max-w-sm text-sm leading-7 text-vjj-coffee">
                 Premium jewellery collection with store support, WhatsApp
                 enquiry, wishlist, cart, checkout and order tracking.
               </p>
@@ -70,7 +70,7 @@ export default function Footer() {
                   href={BRAND.instagram}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-blue-100 bg-white/80 text-blue-700 transition hover:bg-blue-600 hover:text-white"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-vjj-champagne bg-white/80 text-vjj-bronze transition hover:bg-vjj-gold hover:text-white"
                   aria-label="Instagram"
                 >
                   <Camera size={19} />
@@ -90,7 +90,7 @@ export default function Footer() {
 
                 <a
                   href={`tel:${BRAND.phone}`}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-blue-100 bg-white/80 text-blue-700 transition hover:bg-blue-600 hover:text-white"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-vjj-champagne bg-white/80 text-vjj-bronze transition hover:bg-vjj-gold hover:text-white"
                   aria-label="Phone"
                 >
                   <Phone size={19} />
@@ -103,7 +103,7 @@ export default function Footer() {
             <FooterColumn title="Categories" links={customerLinks} />
 
             <div>
-              <h3 className="font-serif text-2xl font-bold text-slate-950">
+              <h3 className="font-serif text-2xl font-bold text-vjj-black">
                 Contact Store
               </h3>
 
@@ -128,10 +128,10 @@ export default function Footer() {
                 />
               </div>
 
-              <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
+              <div className="mt-6 rounded-2xl border border-vjj-champagne bg-vjj-soft/70 p-4">
                 <div className="flex gap-3">
-                  <ShieldCheck className="shrink-0 text-blue-700" size={21} />
-                  <p className="text-sm leading-6 text-slate-600">
+                  <ShieldCheck className="shrink-0 text-vjj-bronze" size={21} />
+                  <p className="text-sm leading-6 text-vjj-coffee">
                     For jewellery orders, store team will confirm details before
                     delivery or pickup.
                   </p>
@@ -140,7 +140,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div className="border-t border-blue-100/70 bg-white/45 px-6 py-5 md:px-8">
+          <div className="border-t border-vjj-champagne/70 bg-white/45 px-6 py-5 md:px-8">
             <div className="flex flex-col justify-between gap-3 text-sm text-slate-500 md:flex-row md:items-center">
               <p>
                 © {new Date().getFullYear()} {BRAND.displayName}. All rights
@@ -148,7 +148,7 @@ export default function Footer() {
               </p>
 
               <p className="inline-flex items-center gap-1">
-                Made with <Heart size={15} className="text-blue-600" /> by
+                Made with <Heart size={15} className="text-vjj-gold" /> by
                 Surojit Manna
               </p>
             </div>
@@ -162,14 +162,14 @@ export default function Footer() {
 function FooterColumn({ title, links }) {
   return (
     <div>
-      <h3 className="font-serif text-2xl font-bold text-slate-950">{title}</h3>
+      <h3 className="font-serif text-2xl font-bold text-vjj-black">{title}</h3>
 
       <div className="mt-5 grid gap-3">
         {links.map((link) => (
           <Link
             key={link.href}
             to={link.href}
-            className="text-sm font-semibold text-slate-600 transition hover:translate-x-1 hover:text-blue-700"
+            className="text-sm font-semibold text-vjj-coffee transition hover:translate-x-1 hover:text-vjj-bronze"
           >
             {link.label}
           </Link>
@@ -181,7 +181,7 @@ function FooterColumn({ title, links }) {
 
 function ContactItem({ icon, label, href, external = false }) {
   const className =
-    "flex items-center gap-3 rounded-2xl border border-blue-100 bg-white/70 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-blue-600 hover:text-white";
+    "flex items-center gap-3 rounded-2xl border border-vjj-champagne bg-white/70 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-vjj-gold hover:text-white";
 
   if (external) {
     return (
