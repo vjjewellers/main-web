@@ -27,6 +27,8 @@ import {
 import { formatCurrency } from "../utils/formatCurrency";
 import { BRAND } from "../utils/constants";
 
+const LIVE_SITE_URL = "https://vermajijewellers.com";
+
 const fallbackImage =
   "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1100&q=90";
 
@@ -95,10 +97,9 @@ export default function ProductDetails() {
         )
       : 0;
 
-  const productLink =
-    product?.slug && typeof window !== "undefined"
-      ? `${window.location.origin}/products/${product.slug}`
-      : "";
+  const productLink = product?.slug
+    ? `${LIVE_SITE_URL}/products/${product.slug}`
+    : LIVE_SITE_URL;
 
   const whatsappUrl = useMemo(() => {
     if (!product) return "#";
