@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-import api from "../services/api";
+import { getProductsFromSupabase } from "../services/supabaseProducts";
 import ProductCard from "../components/product/ProductCard";
 import { BRAND, CATEGORIES } from "../utils/constants";
 
@@ -141,11 +141,11 @@ export default function Home() {
     try {
       setLoadingProducts(true);
 
-      const { data } = await api.get("/products", {
-        params: {
-          limit: 8,
-        },
+      const data = await getProductsFromSupabase({
+        limit: 8,
       });
+
+      setProducts(data.products || []);
 
       setProducts(data.products || data || []);
     } catch (error) {
