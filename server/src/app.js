@@ -14,6 +14,13 @@ const app = express();
 
 const allowedOrigins = [
   process.env.CLIENT_URL,
+  process.env.CLIENT_URL_2,
+  process.env.CLIENT_URL_3,
+
+  "https://vermajijewellers.com",
+  "https://www.vermajijewellers.com",
+  "https://vjjewel.netlify.app",
+
   "http://localhost:5173",
   "http://localhost:3000",
 ].filter(Boolean);
@@ -25,6 +32,7 @@ app.use(
         return callback(null, true);
       }
 
+      console.log("CORS blocked origin:", origin);
       return callback(new Error(`CORS blocked for origin: ${origin}`));
     },
     credentials: true,
@@ -39,14 +47,14 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 app.get("/", (req, res) => {
-  res.status(200).json({
+  res.json({
     success: true,
     message: "VJJ Shop API is running",
   });
 });
 
 app.get("/api/health", (req, res) => {
-  res.status(200).json({
+  res.json({
     success: true,
     message: "Server healthy",
   });
@@ -64,15 +72,6 @@ app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: `Route not found: ${req.originalUrl}`,
-  });
-});
-
-app.use((error, req, res, next) => {
-  console.error("SERVER ERROR:", error);
-
-  res.status(error.statusCode || 500).json({
-    success: false,
-    message: error.message || "Internal server error",
   });
 });
 
