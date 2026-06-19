@@ -93,19 +93,12 @@ export default function Navbar() {
       >
         <div className="mx-auto max-w-[1500px]">
           <div className="flex items-center justify-between gap-4">
-            <Link to="/" className="flex min-w-0 items-center gap-3">
-              <div className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-vjj-gold to-vjj-bronze text-white shadow-lg shadow-vjj-gold/20 sm:h-12 sm:w-12">
-                <Sparkles size={22} />
-              </div>
-
-              <div className="min-w-0">
-                <p className="truncate font-serif text-xl font-bold leading-none text-vjj-black sm:text-2xl">
-                  {BRAND.displayName}
-                </p>
-                <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-[0.2em] text-vjj-gold sm:text-[11px]">
-                  Verma Ji Jewellers
-                </p>
-              </div>
+            <Link to="/" className="flex shrink-0 items-center">
+              <img
+                src="/logo.png"
+                alt="Verma Ji Jewellers"
+                className="h-12 w-auto object-contain sm:h-14 lg:h-16"
+              />
             </Link>
 
             <nav className="hidden items-center gap-1 rounded-full border border-vjj-champagne bg-vjj-soft p-1 lg:flex">
@@ -251,20 +244,13 @@ export default function Navbar() {
                   <Link
                     to="/"
                     onClick={() => setMobileOpen(false)}
-                    className="flex min-w-0 items-center gap-3"
+                    className="flex shrink-0 items-center"
                   >
-                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-vjj-espresso text-vjj-champagne">
-                      <Sparkles size={22} />
-                    </div>
-
-                    <div className="min-w-0">
-                      <p className="truncate font-serif text-2xl font-bold text-vjj-black">
-                        {BRAND.displayName}
-                      </p>
-                      <p className="mt-1 text-xs font-bold uppercase tracking-[0.2em] text-vjj-gold">
-                        Jewellery Store
-                      </p>
-                    </div>
+                    <img
+                      src="/logo.png"
+                      alt="Verma Ji Jewellers"
+                      className="h-14 w-auto object-contain"
+                    />
                   </Link>
 
                   <button
