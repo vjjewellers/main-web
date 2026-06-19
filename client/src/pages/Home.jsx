@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import MetalRateTicker from "../components/home/MetalRateTicker";
 import {
   ArrowRight,
   Camera,
@@ -172,6 +173,7 @@ export default function Home() {
 
   return (
     <main className="overflow-hidden bg-transparent">
+      <MetalRateTicker />
       <section className="relative px-4 pt-5 sm:px-5 lg:px-8 lg:pt-8">
         <div className="absolute inset-0 -z-10">
           <div className="absolute left-[-12%] top-[-10%] h-96 w-96 rounded-full bg-blue-200/60 blur-3xl" />
