@@ -1,16 +1,26 @@
-require("dotenv").config();
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  process.env.CLIENT_URL_2,
+  process.env.CLIENT_URL_3,
 
-const dns = require("dns");
-dns.setDefaultResultOrder("ipv4first");
-dns.setServers(["8.8.8.8", "1.1.1.1"]);
+  "https://vermajijewellers.com",
+  "https://www.vermajijewellers.com",
+  "https://vjjewel.netlify.app",
 
-const app = require("./src/app");
-const connectDB = require("./src/config/db");
+  "http://localhost:5173",
+  "http://localhost:3000",
+].filter(Boolean);
 
-const PORT = process.env.PORT || 5000;
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
 
-connectDB();
-
-app.listen(PORT, () => {
-  console.log(`VJJ Shop server running on port ${PORT}`);
-});
+      console.log("CORS blocked origin:", origin);
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
+  }),
+);
