@@ -32,7 +32,7 @@ const getRoleClass = (role) => {
   }
 
   if (cleanRole.includes("admin")) {
-    return "bg-blue-50 text-blue-700 border-blue-100";
+    return "bg-vjj-soft text-vjj-bronze border-vjj-champagne";
   }
 
   return "bg-green-50 text-green-700 border-green-100";

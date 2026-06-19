@@ -43,7 +43,7 @@ const getProductImage = (product) =>
   "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=300&q=90";
 
 const statusStyle = {
-  placed: "bg-blue-50 text-blue-700",
+  placed: "bg-vjj-soft text-vjj-bronze",
   confirmed: "bg-amber-50 text-amber-700",
   processing: "bg-purple-50 text-purple-700",
   shipped: "bg-indigo-50 text-indigo-700",

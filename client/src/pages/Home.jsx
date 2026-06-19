@@ -184,7 +184,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 26 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55 }}
-            className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-[0_20px_60px_rgba(15,23,42,0.08)] lg:hidden"
+            className="overflow-hidden rounded-[2rem] border border-vjj-champagne bg-white p-3 shadow-[0_20px_60px_rgba(15,23,42,0.08)] lg:hidden"
           >
             <div className="relative overflow-hidden rounded-[1.5rem]">
               <img
@@ -196,7 +196,7 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/20 to-transparent" />
 
               <div className="absolute bottom-5 left-5 right-5">
-                <p className="inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-blue-700">
+                <p className="inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-vjj-bronze">
                   <Sparkles size={14} />
                   Verma ji jewellers
                 </p>
@@ -217,20 +217,20 @@ export default function Home() {
             initial={{ opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.05 }}
-            className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-7 md:rounded-[2.5rem] md:p-10"
+            className="rounded-[2rem] border border-vjj-champagne bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-7 md:rounded-[2.5rem] md:p-10"
           >
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700">
+            <div className="inline-flex items-center gap-2 rounded-full border border-vjj-champagne bg-vjj-soft px-4 py-2 text-sm font-bold text-vjj-bronze">
               <Sparkles size={16} />
               Verma ji jewellers
             </div>
 
-            <h1 className="mt-6 font-serif text-4xl font-bold leading-tight text-slate-950 sm:text-5xl md:text-6xl xl:text-7xl">
+            <h1 className="mt-6 font-serif text-4xl font-bold leading-tight text-vjj-black sm:text-5xl md:text-6xl xl:text-7xl">
               Jewellery that feels{" "}
-              <span className="text-blue-600">light, elegant</span> and
+              <span className="text-vjj-gold">light, elegant</span> and
               timeless.
             </h1>
 
-            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
+            <p className="mt-5 max-w-2xl text-base leading-7 text-vjj-coffee sm:text-lg sm:leading-8">
               Explore premium gold, silver and jewellery collections crafted for
               daily wear, wedding moments, festive looks and gifting.
             </p>
@@ -238,7 +238,7 @@ export default function Home() {
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <Link
                 to="/products"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-7 py-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-700"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-vjj-gold px-7 py-4 text-sm font-bold text-white shadow-lg shadow-vjj-gold/20 transition hover:-translate-y-0.5 hover:bg-vjj-bronze"
               >
                 View Collection
                 <ArrowRight size={18} />
@@ -248,7 +248,7 @@ export default function Home() {
                 href={BRAND.instagram}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-7 py-4 text-sm font-bold text-slate-900 transition hover:bg-white"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-vjj-champagne bg-vjj-soft px-7 py-4 text-sm font-bold text-slate-900 transition hover:bg-white"
               >
                 <Camera size={18} />
                 Follow Instagram
@@ -269,7 +269,7 @@ export default function Home() {
             transition={{ duration: 0.65, delay: 0.1 }}
             className="hidden gap-4 md:grid-cols-2 lg:grid"
           >
-            <div className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-[0_24px_80px_rgba(59,130,246,0.15)] md:col-span-2 md:rounded-[2.5rem]">
+            <div className="overflow-hidden rounded-[2rem] border border-vjj-champagne bg-white p-3 shadow-[0_24px_80px_rgba(59,130,246,0.15)] md:col-span-2 md:rounded-[2.5rem]">
               <img
                 src={heroImages[0]}
                 alt="Jewellery collection"
@@ -277,7 +277,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
+            <div className="overflow-hidden rounded-[2rem] border border-vjj-champagne bg-white p-3 shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
               <img
                 src={heroImages[1]}
                 alt="Gold jewellery"
@@ -285,7 +285,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
+            <div className="overflow-hidden rounded-[2rem] border border-vjj-champagne bg-white p-3 shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
               <img
                 src={heroImages[2]}
                 alt="Jewellery design"
@@ -305,17 +305,17 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.45, delay: index * 0.08 }}
-              className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(59,130,246,0.14)]"
+              className="rounded-[2rem] border border-vjj-champagne bg-white p-6 shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(59,130,246,0.14)]"
             >
-              <div className="grid h-12 w-12 place-items-center rounded-full bg-blue-100 text-blue-700">
+              <div className="grid h-12 w-12 place-items-center rounded-full bg-vjj-champagne text-vjj-bronze">
                 {item.icon}
               </div>
 
-              <h3 className="mt-5 font-serif text-2xl font-bold text-slate-950">
+              <h3 className="mt-5 font-serif text-2xl font-bold text-vjj-black">
                 {item.title}
               </h3>
 
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-sm leading-6 text-vjj-coffee">
                 {item.text}
               </p>
             </motion.div>
@@ -342,7 +342,7 @@ export default function Home() {
             >
               <Link
                 to={`/products?category=${encodeURIComponent(category)}`}
-                className="group block overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(59,130,246,0.18)]"
+                className="group block overflow-hidden rounded-[2rem] border border-vjj-champagne bg-white p-3 shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(59,130,246,0.18)]"
               >
                 <div className="relative overflow-hidden rounded-[1.5rem]">
                   <img
@@ -392,7 +392,7 @@ export default function Home() {
             >
               <Link
                 to={card.link}
-                className="group block overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(59,130,246,0.18)]"
+                className="group block overflow-hidden rounded-[2rem] border border-vjj-champagne bg-white p-3 shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(59,130,246,0.18)]"
               >
                 <div className="relative overflow-hidden rounded-[1.5rem]">
                   <img
@@ -413,7 +413,7 @@ export default function Home() {
                       {card.text}
                     </p>
 
-                    <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-slate-950 transition group-hover:bg-blue-600 group-hover:text-white">
+                    <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-vjj-black transition group-hover:bg-vjj-gold group-hover:text-white">
                       Explore
                       <ArrowRight size={16} />
                     </span>
@@ -460,7 +460,7 @@ export default function Home() {
             >
               <Link
                 to="/products"
-                className="group block overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(59,130,246,0.14)]"
+                className="group block overflow-hidden rounded-[2rem] border border-vjj-champagne bg-white p-3 shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(59,130,246,0.14)]"
               >
                 <div className="relative overflow-hidden rounded-[1.5rem]">
                   <img
@@ -473,7 +473,7 @@ export default function Home() {
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 to-transparent" />
 
                   <div className="absolute bottom-4 left-4">
-                    <p className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-bold text-slate-950">
+                    <p className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-bold text-vjj-black">
                       <Heart size={15} />
                       {card.title}
                     </p>
@@ -507,7 +507,7 @@ export default function Home() {
                 href={BRAND.instagram}
                 target="_blank"
                 rel="noreferrer"
-                className="group block overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(59,130,246,0.14)]"
+                className="group block overflow-hidden rounded-[2rem] border border-vjj-champagne bg-white p-3 shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(59,130,246,0.14)]"
               >
                 <div className="relative overflow-hidden rounded-[1.5rem]">
                   <img
@@ -520,7 +520,7 @@ export default function Home() {
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 to-transparent" />
 
                   <div className="absolute inset-0 grid place-items-center">
-                    <div className="grid h-16 w-16 place-items-center rounded-full bg-white/90 text-blue-700 shadow-xl">
+                    <div className="grid h-16 w-16 place-items-center rounded-full bg-white/90 text-vjj-bronze shadow-xl">
                       <PlayCircle size={34} />
                     </div>
                   </div>
@@ -567,18 +567,18 @@ export default function Home() {
 
       <section className="px-4 pb-16 sm:px-5 lg:px-8">
         <div className="mx-auto max-w-[1500px]">
-          <div className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:p-6 md:rounded-[2.5rem] md:p-10">
+          <div className="overflow-hidden rounded-[2rem] border border-vjj-champagne bg-white p-5 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:p-6 md:rounded-[2.5rem] md:p-10">
             <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
               <div>
-                <div className="grid h-16 w-16 place-items-center rounded-full bg-blue-100 text-blue-700">
+                <div className="grid h-16 w-16 place-items-center rounded-full bg-vjj-champagne text-vjj-bronze">
                   <Crown size={32} />
                 </div>
 
-                <h2 className="mt-6 font-serif text-4xl font-bold text-slate-950 sm:text-5xl">
+                <h2 className="mt-6 font-serif text-4xl font-bold text-vjj-black sm:text-5xl">
                   Visit our store or enquire online
                 </h2>
 
-                <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
+                <p className="mt-4 text-base leading-7 text-vjj-coffee sm:text-lg sm:leading-8">
                   Browse products online and contact the store directly for
                   jewellery enquiry, confirmation and delivery support.
                 </p>
@@ -586,7 +586,7 @@ export default function Home() {
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                   <Link
                     to="/products"
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-7 py-4 text-sm font-bold text-white transition hover:bg-blue-700"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-vjj-gold px-7 py-4 text-sm font-bold text-white transition hover:bg-vjj-bronze"
                   >
                     View Collection
                     <ArrowRight size={18} />
@@ -596,7 +596,7 @@ export default function Home() {
                     href={BRAND.mapUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center justify-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-7 py-4 text-sm font-bold text-slate-950 transition hover:bg-white"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-vjj-champagne bg-vjj-soft px-7 py-4 text-sm font-bold text-vjj-black transition hover:bg-white"
                   >
                     Store Location
                   </a>
@@ -627,8 +627,8 @@ export default function Home() {
 
 function HeroMiniStat({ label, value }) {
   return (
-    <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
-      <p className="font-serif text-3xl font-bold text-slate-950">{value}</p>
+    <div className="rounded-2xl border border-vjj-champagne bg-vjj-soft p-4">
+      <p className="font-serif text-3xl font-bold text-vjj-black">{value}</p>
       <p className="mt-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
         {label}
       </p>
@@ -648,15 +648,15 @@ function SectionHeader({ eyebrow, title, text, link, external = false }) {
     <section className="px-4 py-8 sm:px-5 lg:px-8">
       <div className="mx-auto flex max-w-[1500px] flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.3em] text-blue-600">
+          <p className="text-sm font-bold uppercase tracking-[0.3em] text-vjj-gold">
             {eyebrow}
           </p>
 
-          <h2 className="mt-2 font-serif text-4xl font-bold text-slate-950 md:text-5xl">
+          <h2 className="mt-2 font-serif text-4xl font-bold text-vjj-black md:text-5xl">
             {title}
           </h2>
 
-          <p className="mt-3 max-w-2xl text-slate-600">{text}</p>
+          <p className="mt-3 max-w-2xl text-vjj-coffee">{text}</p>
         </div>
 
         {external ? (
@@ -664,14 +664,14 @@ function SectionHeader({ eyebrow, title, text, link, external = false }) {
             href={link}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-blue-100 bg-white px-5 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-blue-600 hover:text-white"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-vjj-champagne bg-white px-5 py-2.5 text-sm font-bold text-vjj-black transition hover:bg-vjj-gold hover:text-white"
           >
             {content}
           </a>
         ) : (
           <Link
             to={link}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-blue-100 bg-white px-5 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-blue-600 hover:text-white"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-vjj-champagne bg-white px-5 py-2.5 text-sm font-bold text-vjj-black transition hover:bg-vjj-gold hover:text-white"
           >
             {content}
           </Link>
@@ -696,16 +696,16 @@ function ProductSkeleton() {
 
 function EmptyProducts() {
   return (
-    <div className="rounded-[2rem] border border-blue-100 bg-white p-10 text-center shadow-[0_20px_70px_rgba(15,23,42,0.05)]">
-      <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-blue-100 text-blue-700">
+    <div className="rounded-[2rem] border border-vjj-champagne bg-white p-10 text-center shadow-[0_20px_70px_rgba(15,23,42,0.05)]">
+      <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-vjj-champagne text-vjj-bronze">
         <ShoppingBag />
       </div>
 
-      <h3 className="mt-5 font-serif text-3xl font-bold text-slate-950">
+      <h3 className="mt-5 font-serif text-3xl font-bold text-vjj-black">
         No products added yet
       </h3>
 
-      <p className="mt-2 text-slate-600">
+      <p className="mt-2 text-vjj-coffee">
         Products added from admin panel will appear here.
       </p>
     </div>

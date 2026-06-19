@@ -199,13 +199,13 @@ Kindly share more details.`;
     return (
       <section className="px-4 py-16 sm:px-5 lg:px-8">
         <div className="mx-auto max-w-[1200px] rounded-[2rem] bg-white p-10 text-center shadow-sm">
-          <h1 className="font-serif text-4xl font-bold text-slate-950">
+          <h1 className="font-serif text-4xl font-bold text-vjj-black">
             Product not found
           </h1>
 
           <Link
             to="/products"
-            className="mt-6 inline-flex rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white"
+            className="mt-6 inline-flex rounded-full bg-vjj-gold px-6 py-3 text-sm font-bold text-white"
           >
             Back to Products
           </Link>
@@ -221,7 +221,7 @@ Kindly share more details.`;
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-blue-600 hover:text-white"
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-vjj-champagne bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-vjj-gold hover:text-white"
           >
             <ArrowLeft size={17} />
             Back
@@ -229,8 +229,8 @@ Kindly share more details.`;
 
           <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] xl:gap-12">
             <div>
-              <div className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white p-3 shadow-[0_20px_70px_rgba(15,23,42,0.08)]">
-                <div className="relative overflow-hidden rounded-[1.5rem] bg-blue-50">
+              <div className="overflow-hidden rounded-[2rem] border border-vjj-champagne bg-white p-3 shadow-[0_20px_70px_rgba(15,23,42,0.08)]">
+                <div className="relative overflow-hidden rounded-[1.5rem] bg-vjj-soft">
                   <img
                     src={activeImage}
                     alt={product.name}
@@ -242,7 +242,7 @@ Kindly share more details.`;
                       <button
                         type="button"
                         onClick={goPrevImage}
-                        className="absolute left-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-slate-950 shadow-md transition hover:bg-blue-600 hover:text-white"
+                        className="absolute left-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-vjj-black shadow-md transition hover:bg-vjj-gold hover:text-white"
                         aria-label="Previous image"
                       >
                         <ChevronLeft size={22} />
@@ -251,7 +251,7 @@ Kindly share more details.`;
                       <button
                         type="button"
                         onClick={goNextImage}
-                        className="absolute right-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-slate-950 shadow-md transition hover:bg-blue-600 hover:text-white"
+                        className="absolute right-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-vjj-black shadow-md transition hover:bg-vjj-gold hover:text-white"
                         aria-label="Next image"
                       >
                         <ChevronRight size={22} />
@@ -267,7 +267,7 @@ Kindly share more details.`;
                     )}
 
                     {product.isFeatured && (
-                      <span className="rounded-full bg-slate-950 px-4 py-2 text-xs font-bold text-white">
+                      <span className="rounded-full bg-vjj-espresso px-4 py-2 text-xs font-bold text-white">
                         Featured
                       </span>
                     )}
@@ -290,8 +290,8 @@ Kindly share more details.`;
                       onClick={() => setActiveImageIndex(index)}
                       className={`overflow-hidden rounded-2xl border p-1 transition ${
                         activeImageIndex === index
-                          ? "border-blue-600 bg-blue-50"
-                          : "border-blue-100 bg-white hover:border-blue-300"
+                          ? "border-blue-600 bg-vjj-soft"
+                          : "border-vjj-champagne bg-white hover:border-blue-300"
                       }`}
                     >
                       <img
@@ -305,9 +305,9 @@ Kindly share more details.`;
               )}
             </div>
 
-            <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:p-7 lg:p-9">
+            <div className="rounded-[2rem] border border-vjj-champagne bg-white p-5 shadow-[0_20px_70px_rgba(15,23,42,0.06)] sm:p-7 lg:p-9">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-blue-700">
+                <span className="inline-flex items-center gap-2 rounded-full bg-vjj-soft px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-vjj-bronze">
                   <Sparkles size={15} />
                   {product.category || "Jewellery"}
                 </span>
@@ -329,18 +329,18 @@ Kindly share more details.`;
                 </span>
               </div>
 
-              <h1 className="mt-6 font-serif text-4xl font-bold leading-tight text-slate-950 sm:text-5xl lg:text-6xl">
+              <h1 className="mt-6 font-serif text-4xl font-bold leading-tight text-vjj-black sm:text-5xl lg:text-6xl">
                 {product.name}
               </h1>
 
               {product.shortDescription && (
-                <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
+                <p className="mt-4 text-base leading-7 text-vjj-coffee sm:text-lg sm:leading-8">
                   {product.shortDescription}
                 </p>
               )}
 
               <div className="mt-6 flex flex-wrap items-end gap-3">
-                <p className="font-serif text-4xl font-bold text-slate-950">
+                <p className="font-serif text-4xl font-bold text-vjj-black">
                   {formatCurrency(product.price)}
                 </p>
 
@@ -361,7 +361,7 @@ Kindly share more details.`;
                   href={whatsappUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-7 py-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-700"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-vjj-gold px-7 py-4 text-sm font-bold text-white shadow-lg shadow-vjj-gold/20 transition hover:bg-vjj-bronze"
                 >
                   <MessageCircle size={19} />
                   Enquire on WhatsApp
@@ -373,7 +373,7 @@ Kindly share more details.`;
                   className={`inline-flex items-center justify-center gap-2 rounded-full border px-7 py-4 text-sm font-bold transition ${
                     isWishlisted
                       ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-                      : "border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white"
+                      : "border-vjj-champagne bg-vjj-soft text-vjj-bronze hover:bg-vjj-gold hover:text-white"
                   }`}
                 >
                   <Heart
@@ -387,7 +387,7 @@ Kindly share more details.`;
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <a
                   href={`tel:${BRAND.phone}`}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-blue-100 bg-white px-7 py-4 text-sm font-bold text-slate-800 transition hover:bg-blue-600 hover:text-white"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-vjj-champagne bg-white px-7 py-4 text-sm font-bold text-slate-800 transition hover:bg-vjj-gold hover:text-white"
                 >
                   <Phone size={18} />
                   Call Store
@@ -395,7 +395,7 @@ Kindly share more details.`;
 
                 <Link
                   to="/products"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-blue-100 bg-white px-7 py-4 text-sm font-bold text-slate-800 transition hover:bg-blue-600 hover:text-white"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-vjj-champagne bg-white px-7 py-4 text-sm font-bold text-slate-800 transition hover:bg-vjj-gold hover:text-white"
                 >
                   Browse More
                 </Link>
@@ -419,7 +419,7 @@ Kindly share more details.`;
                 />
               </div>
 
-              <div className="mt-8 grid gap-4 rounded-[1.5rem] border border-blue-100 bg-blue-50/60 p-5 sm:grid-cols-2">
+              <div className="mt-8 grid gap-4 rounded-[1.5rem] border border-vjj-champagne bg-vjj-soft/60 p-5 sm:grid-cols-2">
                 <InfoRow label="SKU" value={product.sku || "N/A"} />
                 <InfoRow label="Material" value={product.material || "N/A"} />
                 <InfoRow label="Purity" value={product.purity || "N/A"} />
@@ -438,7 +438,7 @@ Kindly share more details.`;
                 product.netWeight ||
                 product.makingCharge ||
                 product.gstPercent) && (
-                <div className="mt-5 grid gap-4 rounded-[1.5rem] border border-blue-100 bg-white p-5 sm:grid-cols-2">
+                <div className="mt-5 grid gap-4 rounded-[1.5rem] border border-vjj-champagne bg-white p-5 sm:grid-cols-2">
                   <InfoRow
                     label="Gross Weight"
                     value={
@@ -472,18 +472,18 @@ Kindly share more details.`;
 
       {(product.longDescription || product.description) && (
         <section className="px-4 pb-10 sm:px-5 lg:px-8">
-          <div className="mx-auto max-w-[1500px] rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_20px_70px_rgba(15,23,42,0.05)] md:p-8">
+          <div className="mx-auto max-w-[1500px] rounded-[2rem] border border-vjj-champagne bg-white p-6 shadow-[0_20px_70px_rgba(15,23,42,0.05)] md:p-8">
             <div className="flex items-center gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-full bg-blue-50 text-blue-700">
+              <div className="grid h-11 w-11 place-items-center rounded-full bg-vjj-soft text-vjj-bronze">
                 <Info size={20} />
               </div>
 
-              <h2 className="font-serif text-3xl font-bold text-slate-950">
+              <h2 className="font-serif text-3xl font-bold text-vjj-black">
                 Product Details
               </h2>
             </div>
 
-            <p className="mt-5 max-w-5xl whitespace-pre-line text-base leading-8 text-slate-600">
+            <p className="mt-5 max-w-5xl whitespace-pre-line text-base leading-8 text-vjj-coffee">
               {product.longDescription || product.description}
             </p>
           </div>
@@ -492,8 +492,8 @@ Kindly share more details.`;
 
       {Array.isArray(product.highlights) && product.highlights.length > 0 && (
         <section className="px-4 pb-10 sm:px-5 lg:px-8">
-          <div className="mx-auto max-w-[1500px] rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_20px_70px_rgba(15,23,42,0.05)] md:p-8">
-            <h2 className="font-serif text-3xl font-bold text-slate-950">
+          <div className="mx-auto max-w-[1500px] rounded-[2rem] border border-vjj-champagne bg-white p-6 shadow-[0_20px_70px_rgba(15,23,42,0.05)] md:p-8">
+            <h2 className="font-serif text-3xl font-bold text-vjj-black">
               Highlights
             </h2>
 
@@ -501,11 +501,11 @@ Kindly share more details.`;
               {product.highlights.map((item, index) => (
                 <div
                   key={`${item}-${index}`}
-                  className="flex items-start gap-3 rounded-2xl bg-blue-50 p-4"
+                  className="flex items-start gap-3 rounded-2xl bg-vjj-soft p-4"
                 >
                   <Star
                     size={18}
-                    className="mt-1 shrink-0 text-blue-700"
+                    className="mt-1 shrink-0 text-vjj-bronze"
                     fill="currentColor"
                   />
                   <p className="text-sm font-semibold leading-6 text-slate-700">
@@ -523,17 +523,17 @@ Kindly share more details.`;
           <div className="mx-auto max-w-[1500px]">
             <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
               <div>
-                <p className="text-sm font-bold uppercase tracking-[0.3em] text-blue-600">
+                <p className="text-sm font-bold uppercase tracking-[0.3em] text-vjj-gold">
                   Related Products
                 </p>
-                <h2 className="mt-2 font-serif text-4xl font-bold text-slate-950">
+                <h2 className="mt-2 font-serif text-4xl font-bold text-vjj-black">
                   You may also like
                 </h2>
               </div>
 
               <Link
                 to="/products"
-                className="inline-flex items-center justify-center rounded-full border border-blue-100 bg-white px-5 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-blue-600 hover:text-white"
+                className="inline-flex items-center justify-center rounded-full border border-vjj-champagne bg-white px-5 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-vjj-gold hover:text-white"
               >
                 View All
               </Link>
@@ -564,9 +564,9 @@ function InfoRow({ label, value }) {
 
 function TrustCard({ icon, title, text }) {
   return (
-    <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
-      <div className="text-blue-700">{icon}</div>
-      <p className="mt-3 text-sm font-bold text-slate-950">{title}</p>
+    <div className="rounded-2xl border border-vjj-champagne bg-vjj-soft/70 p-4">
+      <div className="text-vjj-bronze">{icon}</div>
+      <p className="mt-3 text-sm font-bold text-vjj-black">{title}</p>
       <p className="mt-1 text-xs text-slate-500">{text}</p>
     </div>
   );
