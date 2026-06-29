@@ -5,8 +5,17 @@ const connectDB = require("./src/config/db");
 
 const PORT = process.env.PORT || 5000;
 
-connectDB();
+const startServer = async () => {
+  try {
+    await connectDB();
 
-app.listen(PORT, () => {
-  console.log(`VJJ Shop server running on port ${PORT}`);
-});
+    app.listen(PORT, () => {
+      console.log(`VJJ Shop server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error(`Unable to start server: ${error.message}`);
+    process.exit(1);
+  }
+};
+
+startServer();
