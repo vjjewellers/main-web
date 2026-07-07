@@ -18,6 +18,10 @@ import toast from "react-hot-toast";
 import api from "../../services/api";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { CATEGORIES } from "../../utils/constants";
+import JewelleryPricingCalculator, {
+  emptyPricing,
+  calculatePricing,
+} from "../../components/admin/JewelleryPricingCalculator";
 
 const MATERIALS = ["Gold", "Silver", "Diamond", "Platinum", "Gemstone"];
 const PURITIES = ["18K", "22K", "24K", "925 Silver"];
@@ -74,6 +78,8 @@ const emptyForm = {
   description: "",
   longDescription: "",
 
+  pricingMode: "calculator",
+
   price: "",
   comparePrice: "",
 
@@ -87,6 +93,8 @@ const emptyForm = {
   grossWeight: "",
   netWeight: "",
 
+  jewelleryPricing: emptyPricing,
+
   stock: "",
   sizes: "",
   tags: "",
@@ -95,7 +103,7 @@ const emptyForm = {
     "Keep jewellery away from perfume, water and harsh chemicals. Store separately in a soft pouch or box after use.",
 
   makingCharge: "",
-  gstPercent: "",
+  gstPercent: "3",
 
   isFeatured: false,
   readyToShip: true,
@@ -121,6 +129,13 @@ const normalizeProductToForm = (product) => {
     category: product.category || "",
     description: product.description || "",
     longDescription: product.longDescription || "",
+    pricingMode: product.pricingMode || "manual",
+
+    jewelleryPricing:
+      product.jewelleryPricing &&
+      Number(product.jewelleryPricing.grossWeightGrams) > 0
+        ? product.jewelleryPricing
+        : emptyPricing,
 
     price: product.price || "",
     comparePrice: product.comparePrice || "",
@@ -132,8 +147,17 @@ const normalizeProductToForm = (product) => {
     gender: product.gender || "",
     occasion: product.occasion || "",
     materialColor: product.materialColor || "",
-    grossWeight: product.grossWeight || "",
-    netWeight: product.netWeight || "",
+    grossWeight:
+      product.grossWeight ||
+      (product.jewelleryPricing?.grossWeightGrams
+        ? `${product.jewelleryPricing.grossWeightGrams} g`
+        : ""),
+
+    netWeight:
+      product.netWeight ||
+      (product.jewelleryPricing?.netWeightGrams
+        ? `${product.jewelleryPricing.netWeightGrams} g`
+        : ""),
 
     stock: product.stock || "",
     sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : "",
@@ -215,10 +239,9 @@ export default function ManageProducts() {
     try {
       setLoading(true);
 
-      const { data } = await api.get("/products", {
+      const { data } = await api.get("/products/admin/all", {
         params: {
           limit: 200,
-          admin: true,
         },
       });
 
@@ -300,6 +323,22 @@ export default function ManageProducts() {
     }));
   };
 
+  const handlePricingChange = (pricing) => {
+    const calculated = calculatePricing(pricing);
+
+    setFormData((prev) => ({
+      ...prev,
+      jewelleryPricing: calculated,
+
+      grossWeight: `${calculated.grossWeightGrams} g`,
+      netWeight: `${calculated.netWeightGrams} g`,
+
+      price: calculated.finalPrice,
+      makingCharge: calculated.makingChargeAmount,
+      gstPercent: calculated.gstPercent,
+    }));
+  };
+
   const startCreate = () => {
     setEditingProduct(null);
     setFormData(emptyForm);
@@ -361,6 +400,12 @@ export default function ManageProducts() {
   };
 
   const buildPayload = () => {
+    const calculatorPricing = calculatePricing(
+      formData.jewelleryPricing || emptyPricing,
+    );
+
+    const isCalculatorMode = formData.pricingMode === "calculator";
+
     return {
       name: formData.name.trim(),
       sku: formData.sku.trim(),
@@ -369,8 +414,13 @@ export default function ManageProducts() {
       description: formData.description.trim(),
       longDescription: formData.longDescription.trim(),
 
-      price: Number(formData.price || 0),
-      comparePrice: Number(formData.comparePrice || 0),
+      pricingMode: formData.pricingMode,
+
+      price: isCalculatorMode
+        ? Number(calculatorPricing.finalPrice || 0)
+        : Number(formData.price || 0),
+
+      compareAtPrice: Number(formData.comparePrice || 0),
 
       material: formData.material.trim(),
       purity: formData.purity.trim(),
@@ -380,8 +430,16 @@ export default function ManageProducts() {
       gender: formData.gender.trim(),
       occasion: formData.occasion.trim(),
       materialColor: formData.materialColor.trim(),
-      grossWeight: formData.grossWeight.trim(),
-      netWeight: formData.netWeight.trim(),
+
+      grossWeight: isCalculatorMode
+        ? `${calculatorPricing.grossWeightGrams} g`
+        : formData.grossWeight.trim(),
+
+      netWeight: isCalculatorMode
+        ? `${calculatorPricing.netWeightGrams} g`
+        : formData.netWeight.trim(),
+
+      jewelleryPricing: isCalculatorMode ? calculatorPricing : undefined,
 
       stock: Number(formData.stock || 0),
 
@@ -390,14 +448,20 @@ export default function ManageProducts() {
       highlights: cleanMultilineList(formData.highlights),
       careInstructions: formData.careInstructions.trim(),
 
-      makingCharge: Number(formData.makingCharge || 0),
-      gstPercent: Number(formData.gstPercent || 0),
+      makingCharge: isCalculatorMode
+        ? Number(calculatorPricing.makingChargeAmount || 0)
+        : Number(formData.makingCharge || 0),
+
+      gstPercent: isCalculatorMode
+        ? Number(calculatorPricing.gstPercent || 0)
+        : Number(formData.gstPercent || 0),
 
       isFeatured: Boolean(formData.isFeatured),
       readyToShip: Boolean(formData.readyToShip),
       isActive: Boolean(formData.isActive),
 
       images: formData.images.slice(0, 4),
+
       specificationGroups: cleanSpecificationGroups(
         formData.specificationGroups,
       ),
@@ -691,13 +755,93 @@ export default function ManageProducts() {
                 </div>
               </FormSection>
 
-              <FormSection title="Pricing & Stock">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <FormSection title="Pricing Mode & Stock">
+                <div className="mb-5 grid gap-3 md:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => handleChange("pricingMode", "calculator")}
+                    className={`rounded-2xl border p-4 text-left transition ${
+                      formData.pricingMode === "calculator"
+                        ? "border-vjj-gold bg-vjj-soft"
+                        : "border-black/10 bg-white hover:bg-vjj-soft"
+                    }`}
+                  >
+                    <p className="font-bold text-vjj-black">
+                      Jewellery Calculator
+                    </p>
+                    <p className="mt-1 text-sm text-vjj-coffee">
+                      Calculate final product price from live rate, weight,
+                      making charge, discount and GST.
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleChange("pricingMode", "manual")}
+                    className={`rounded-2xl border p-4 text-left transition ${
+                      formData.pricingMode === "manual"
+                        ? "border-vjj-gold bg-vjj-soft"
+                        : "border-black/10 bg-white hover:bg-vjj-soft"
+                    }`}
+                  >
+                    <p className="font-bold text-vjj-black">Manual Price</p>
+                    <p className="mt-1 text-sm text-vjj-coffee">
+                      Use a simple fixed selling price for non-metal, legacy or
+                      special items.
+                    </p>
+                  </button>
+                </div>
+
+                {formData.pricingMode === "calculator" ? (
+                  <JewelleryPricingCalculator
+                    material={formData.material}
+                    purity={formData.purity}
+                    value={formData.jewelleryPricing}
+                    onChange={handlePricingChange}
+                  />
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <InputField
+                      label="Selling Price"
+                      type="number"
+                      value={formData.price}
+                      onChange={(value) => handleChange("price", value)}
+                      placeholder="0"
+                      required
+                    />
+
+                    <InputField
+                      label="Compare Price"
+                      type="number"
+                      value={formData.comparePrice}
+                      onChange={(value) => handleChange("comparePrice", value)}
+                      placeholder="Optional"
+                    />
+
+                    <InputField
+                      label="Making Charge"
+                      type="number"
+                      value={formData.makingCharge}
+                      onChange={(value) => handleChange("makingCharge", value)}
+                      placeholder="0"
+                    />
+
+                    <InputField
+                      label="GST %"
+                      type="number"
+                      value={formData.gstPercent}
+                      onChange={(value) => handleChange("gstPercent", value)}
+                      placeholder="3"
+                    />
+                  </div>
+                )}
+
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
                   <InputField
-                    label="Price"
+                    label="Stock Quantity"
                     type="number"
-                    value={formData.price}
-                    onChange={(value) => handleChange("price", value)}
+                    value={formData.stock}
+                    onChange={(value) => handleChange("stock", value)}
                     placeholder="0"
                     required
                   />
@@ -708,31 +852,6 @@ export default function ManageProducts() {
                     value={formData.comparePrice}
                     onChange={(value) => handleChange("comparePrice", value)}
                     placeholder="Optional"
-                  />
-
-                  <InputField
-                    label="Stock"
-                    type="number"
-                    value={formData.stock}
-                    onChange={(value) => handleChange("stock", value)}
-                    placeholder="0"
-                    required
-                  />
-
-                  <InputField
-                    label="GST %"
-                    type="number"
-                    value={formData.gstPercent}
-                    onChange={(value) => handleChange("gstPercent", value)}
-                    placeholder="3"
-                  />
-
-                  <InputField
-                    label="Making Charge"
-                    type="number"
-                    value={formData.makingCharge}
-                    onChange={(value) => handleChange("makingCharge", value)}
-                    placeholder="0"
                   />
                 </div>
               </FormSection>
@@ -781,20 +900,6 @@ export default function ManageProducts() {
                     value={formData.occasion}
                     onChange={(value) => handleChange("occasion", value)}
                     options={OCCASIONS}
-                  />
-
-                  <InputField
-                    label="Gross Weight"
-                    value={formData.grossWeight}
-                    onChange={(value) => handleChange("grossWeight", value)}
-                    placeholder="10.5 gm"
-                  />
-
-                  <InputField
-                    label="Net Weight"
-                    value={formData.netWeight}
-                    onChange={(value) => handleChange("netWeight", value)}
-                    placeholder="9.8 gm"
                   />
 
                   <InputField

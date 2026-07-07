@@ -1,11 +1,21 @@
 const Product = require("../models/Product");
 
+const { calculateJewelleryPricing } = require("../utils/jewelleryPricing");
+
 const createSlug = (text) => {
   return String(text || "")
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+};
+
+const toBoolean = (value, fallback = false) => {
+  if (value === undefined || value === null) {
+    return fallback;
+  }
+
+  return value === true || value === "true" || value === 1 || value === "1";
 };
 
 const cleanStringArray = (value) => {
@@ -57,12 +67,52 @@ const cleanSpecificationGroups = (groups = []) => {
     .filter((group) => group.title || group.rows.length > 0);
 };
 
+const buildJewelleryPricingPayload = (body = {}) => {
+  const rawPricing = body.jewelleryPricing || {};
+
+  const rateUpdatedAt = rawPricing.rateUpdatedAt
+    ? new Date(rawPricing.rateUpdatedAt)
+    : null;
+
+  const calculated = calculateJewelleryPricing({
+    grossWeightGrams: rawPricing.grossWeightGrams,
+    lessWeightGrams: rawPricing.lessWeightGrams,
+    ratePerGram: rawPricing.ratePerGram,
+    stoneValue: rawPricing.stoneValue,
+    makingChargeType: rawPricing.makingChargeType,
+    makingChargeValue: rawPricing.makingChargeValue,
+    discountAmount: rawPricing.discountAmount,
+    gstPercent: rawPricing.gstPercent,
+  });
+
+  return {
+    rateState: String(rawPricing.rateState || "Uttar Pradesh").trim(),
+
+    rateSource: ["manual", "api", "custom"].includes(rawPricing.rateSource)
+      ? rawPricing.rateSource
+      : "custom",
+
+    rateUpdatedAt:
+      rateUpdatedAt && !Number.isNaN(rateUpdatedAt.getTime())
+        ? rateUpdatedAt
+        : null,
+
+    ...calculated,
+
+    calculatedAt: new Date(),
+  };
+};
+
 const buildProductPayload = (body) => {
   const name = String(body.name || "").trim();
+
+  const pricingMode =
+    body.pricingMode === "calculator" ? "calculator" : "manual";
 
   const payload = {
     name,
     slug: body.slug ? createSlug(body.slug) : createSlug(name),
+
     sku: String(body.sku || "")
       .trim()
       .toUpperCase(),
@@ -72,17 +122,22 @@ const buildProductPayload = (body) => {
 
     category: String(body.category || "").trim(),
     productType: String(body.productType || "").trim(),
+
     productCollection: String(
       body.productCollection || body.collection || "",
     ).trim(),
+
     gender: String(body.gender || "").trim(),
     occasion: String(body.occasion || "").trim(),
 
     material: String(body.material || "").trim(),
     materialColor: String(body.materialColor || "").trim(),
     purity: String(body.purity || "").trim(),
+
     grossWeight: String(body.grossWeight || "").trim(),
     netWeight: String(body.netWeight || "").trim(),
+
+    pricingMode,
 
     price: Number(body.price || 0),
     compareAtPrice: Number(body.compareAtPrice || 0),
@@ -101,10 +156,24 @@ const buildProductPayload = (body) => {
 
     careInstructions: String(body.careInstructions || "").trim(),
 
-    isFeatured: Boolean(body.isFeatured),
-    isReadyToShip: Boolean(body.isReadyToShip),
-    isActive: body.isActive === undefined ? true : Boolean(body.isActive),
+    isFeatured: toBoolean(body.isFeatured),
+    isReadyToShip: toBoolean(body.isReadyToShip),
+    isActive: body.isActive === undefined ? true : toBoolean(body.isActive),
   };
+
+  if (pricingMode === "calculator") {
+    const jewelleryPricing = buildJewelleryPricingPayload(body);
+
+    payload.jewelleryPricing = jewelleryPricing;
+    payload.price = jewelleryPricing.finalPrice;
+    payload.makingCharge = jewelleryPricing.makingChargeAmount;
+    payload.gstPercent = jewelleryPricing.gstPercent;
+
+    payload.grossWeight = `${jewelleryPricing.grossWeightGrams} g`;
+    payload.netWeight = `${jewelleryPricing.netWeightGrams} g`;
+  } else if (body.jewelleryPricing) {
+    payload.jewelleryPricing = body.jewelleryPricing;
+  }
 
   if (!payload.careInstructions) {
     delete payload.careInstructions;
@@ -113,92 +182,87 @@ const buildProductPayload = (body) => {
   return payload;
 };
 
-const getProducts = async (req, res, next) => {
+const buildProductQuery = (req, includeInactive = false) => {
+  const {
+    category,
+    material,
+    purity,
+    featured,
+    isFeatured,
+    readyToShip,
+    isReadyToShip,
+    minPrice,
+    maxPrice,
+    search,
+  } = req.query;
+
+  const query = includeInactive ? {} : { isActive: true };
+
+  if (category) {
+    query.category = category;
+  }
+
+  if (material) {
+    query.material = material;
+  }
+
+  if (purity) {
+    query.purity = purity;
+  }
+
+  if (featured === "true" || isFeatured === "true") {
+    query.isFeatured = true;
+  }
+
+  if (readyToShip === "true" || isReadyToShip === "true") {
+    query.isReadyToShip = true;
+  }
+
+  if (minPrice || maxPrice) {
+    query.price = {};
+
+    if (minPrice) {
+      query.price.$gte = Number(minPrice);
+    }
+
+    if (maxPrice) {
+      query.price.$lte = Number(maxPrice);
+    }
+  }
+
+  if (search) {
+    const searchRegex = new RegExp(search, "i");
+
+    query.$or = [
+      { name: searchRegex },
+      { sku: searchRegex },
+      { description: searchRegex },
+      { longDescription: searchRegex },
+      { category: searchRegex },
+      { material: searchRegex },
+      { purity: searchRegex },
+      { tags: searchRegex },
+    ];
+  }
+
+  return query;
+};
+
+const getSortOption = (sort) => {
+  if (sort === "oldest") return { createdAt: 1 };
+  if (sort === "price-low") return { price: 1 };
+  if (sort === "price-high") return { price: -1 };
+  if (sort === "name") return { name: 1 };
+
+  return { createdAt: -1 };
+};
+
+const listProducts = async (req, res, next, includeInactive = false) => {
   try {
-    const {
-      category,
-      material,
-      purity,
-      featured,
-      isFeatured,
-      readyToShip,
-      isReadyToShip,
-      minPrice,
-      maxPrice,
-      search,
-      sort = "newest",
-      page = 1,
-      limit = 12,
-    } = req.query;
+    const { sort = "newest", page = 1, limit = 12 } = req.query;
 
-    const query = {
-      isActive: true,
-    };
-
-    if (category) {
-      query.category = category;
-    }
-
-    if (material) {
-      query.material = material;
-    }
-
-    if (purity) {
-      query.purity = purity;
-    }
-
-    if (featured === "true" || isFeatured === "true") {
-      query.isFeatured = true;
-    }
-
-    if (readyToShip === "true" || isReadyToShip === "true") {
-      query.isReadyToShip = true;
-    }
-
-    if (minPrice || maxPrice) {
-      query.price = {};
-
-      if (minPrice) {
-        query.price.$gte = Number(minPrice);
-      }
-
-      if (maxPrice) {
-        query.price.$lte = Number(maxPrice);
-      }
-    }
-
-    if (search) {
-      const searchRegex = new RegExp(search, "i");
-
-      query.$or = [
-        { name: searchRegex },
-        { sku: searchRegex },
-        { description: searchRegex },
-        { longDescription: searchRegex },
-        { category: searchRegex },
-        { material: searchRegex },
-        { purity: searchRegex },
-        { tags: searchRegex },
-      ];
-    }
-
-    let sortOption = { createdAt: -1 };
-
-    if (sort === "oldest") {
-      sortOption = { createdAt: 1 };
-    }
-
-    if (sort === "price-low") {
-      sortOption = { price: 1 };
-    }
-
-    if (sort === "price-high") {
-      sortOption = { price: -1 };
-    }
-
-    if (sort === "name") {
-      sortOption = { name: 1 };
-    }
+    const query = buildProductQuery(req, includeInactive);
+    const sortOption = getSortOption(sort);
 
     const currentPage = Math.max(1, Number(page || 1));
     const pageLimit = Math.max(1, Number(limit || 12));
@@ -220,6 +284,14 @@ const getProducts = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+const getProducts = async (req, res, next) => {
+  return listProducts(req, res, next, false);
+};
+
+const getProductsAdmin = async (req, res, next) => {
+  return listProducts(req, res, next, true);
 };
 
 const getProductBySlug = async (req, res, next) => {
@@ -303,7 +375,7 @@ const createProductAdmin = async (req, res, next) => {
     if (!payload.price || payload.price <= 0) {
       return res.status(400).json({
         success: false,
-        message: "Valid product price is required.",
+        message: "Valid final selling price is required.",
       });
     }
 
@@ -448,6 +520,7 @@ const deleteProductAdmin = async (req, res, next) => {
 
 module.exports = {
   getProducts,
+  getProductsAdmin,
   getProductBySlug,
   createProductAdmin,
   updateProductAdmin,

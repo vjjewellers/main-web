@@ -1,59 +1,68 @@
-import { useEffect, useState } from "react";
-import { NavLink, Outlet, Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  Boxes,
+  CircleHelp,
+  Gem,
+  KeyRound,
   LayoutDashboard,
+  LogOut,
   Package,
   ShoppingBag,
-  Users,
-  KeyRound,
   Store,
-  LogOut,
-  Home,
-  ShieldAlert,
-  Loader2,
-  BookOpen,
+  Users,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-import api from "../../services/api";
 import { logout } from "../../features/auth/authSlice";
 
-const navItems = [
+const navigationItems = [
   {
     label: "Dashboard",
-    href: "/admin",
+    to: "/admin",
     icon: LayoutDashboard,
+    end: true,
+  },
+  {
+    label: "Market Rates",
+    to: "/admin/market-rates",
+    icon: Gem,
   },
   {
     label: "Products",
-    href: "/admin/products",
+    to: "/admin/products",
     icon: Package,
   },
   {
     label: "Orders",
-    href: "/admin/orders",
+    to: "/admin/orders",
     icon: ShoppingBag,
   },
   {
     label: "Users",
-    href: "/admin/users",
+    to: "/admin/users",
     icon: Users,
   },
   {
     label: "Password",
-    href: "/admin/change-password",
+    to: "/admin/change-password",
     icon: KeyRound,
   },
   {
     label: "Help",
-    href: "/admin/help",
-    icon: BookOpen,
+    to: "/admin/help",
+    icon: CircleHelp,
   },
 ];
 
+const getUserRole = (user) =>
+  String(user?.role || "")
+    .toLowerCase()
+    .replace("-", "_");
+
 const isAdminUser = (user) => {
-  const role = String(user?.role || "").toLowerCase();
+  const role = getUserRole(user);
 
   return role === "admin" || role === "super_admin" || role === "superadmin";
 };
@@ -64,196 +73,118 @@ export default function AdminLayout() {
 
   const { user } = useSelector((state) => state.auth);
 
-  const [checking, setChecking] = useState(true);
-  const [verifiedUser, setVerifiedUser] = useState(user || null);
-
   useEffect(() => {
-    const verifyAdmin = async () => {
-      try {
-        const token = localStorage.getItem("vjj_token");
+    if (!user) {
+      navigate("/login", { replace: true });
+      return;
+    }
 
-        if (!token) {
-          setVerifiedUser(null);
-          return;
-        }
-
-        if (user) {
-          setVerifiedUser(user);
-          return;
-        }
-
-        const { data } = await api.get("/auth/me");
-        const freshUser = data.user || data;
-
-        setVerifiedUser(freshUser);
-      } catch (error) {
-        setVerifiedUser(null);
-      } finally {
-        setChecking(false);
-      }
-    };
-
-    verifyAdmin();
-  }, [user]);
+    if (!isAdminUser(user)) {
+      toast.error("You do not have permission to access the admin panel.");
+      navigate("/", { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleLogout = () => {
     dispatch(logout());
     localStorage.removeItem("vjj_token");
+    localStorage.removeItem("persist:root");
+
     toast.success("Logged out successfully");
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
-  if (checking) {
+  if (!user || !isAdminUser(user)) {
     return (
-      <section className="grid min-h-screen place-items-center bg-vjj-ivory px-5">
-        <div className="rounded-[2rem] border border-black/10 bg-white p-8 text-center shadow-luxury">
-          <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-vjj-black text-vjj-champagne">
-            <Loader2 className="animate-spin" size={30} />
-          </div>
-
-          <h1 className="mt-5 font-serif text-3xl font-bold text-vjj-black">
-            Checking Admin Access
-          </h1>
-
-          <p className="mt-2 text-sm text-stone-600">
-            Please wait while we verify your session.
+      <div className="grid min-h-screen place-items-center bg-vjj-ivory px-4">
+        <div className="rounded-[2rem] border border-vjj-champagne bg-vjj-cream px-8 py-10 text-center shadow-[0_20px_70px_rgba(52,34,23,0.08)]">
+          <Boxes size={30} className="mx-auto text-vjj-gold" />
+          <p className="mt-4 font-serif text-2xl font-bold text-vjj-black">
+            Loading Admin Panel...
           </p>
         </div>
-      </section>
-    );
-  }
-
-  if (!verifiedUser) {
-    return (
-      <section className="grid min-h-screen place-items-center bg-vjj-ivory px-5">
-        <div className="max-w-md rounded-[2rem] border border-black/10 bg-white p-8 text-center shadow-luxury">
-          <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-red-50 text-red-700">
-            <ShieldAlert size={32} />
-          </div>
-
-          <h1 className="mt-5 font-serif text-4xl font-bold text-vjj-black">
-            Login Required
-          </h1>
-
-          <p className="mt-3 text-stone-600">
-            Please login with an admin account to access the admin panel.
-          </p>
-
-          <Link
-            to="/login"
-            className="mt-6 inline-flex rounded-full bg-vjj-black px-7 py-3 text-sm font-bold text-white transition hover:bg-vjj-bronze"
-          >
-            Go to Login
-          </Link>
-        </div>
-      </section>
-    );
-  }
-
-  if (!isAdminUser(verifiedUser)) {
-    return (
-      <section className="grid min-h-screen place-items-center bg-vjj-ivory px-5">
-        <div className="max-w-md rounded-[2rem] border border-black/10 bg-white p-8 text-center shadow-luxury">
-          <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-red-50 text-red-700">
-            <ShieldAlert size={32} />
-          </div>
-
-          <h1 className="mt-5 font-serif text-4xl font-bold text-vjj-black">
-            Access Denied
-          </h1>
-
-          <p className="mt-3 text-stone-600">
-            Your account does not have permission to access the admin panel.
-          </p>
-
-          <Link
-            to="/"
-            className="mt-6 inline-flex rounded-full bg-vjj-black px-7 py-3 text-sm font-bold text-white transition hover:bg-vjj-bronze"
-          >
-            Back to Store
-          </Link>
-        </div>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="min-h-screen bg-vjj-ivory">
-      <header className="sticky top-0 z-50 border-b border-black/10 bg-vjj-ivory/90 px-5 py-4 backdrop-blur-xl lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center justify-between gap-4">
-            <Link to="/admin" className="flex items-center gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-full bg-vjj-black text-vjj-champagne shadow-glow">
-                <Store size={22} />
-              </div>
+    <div className="min-h-screen bg-vjj-ivory text-vjj-black">
+      <header className="sticky top-0 z-50 border-b border-vjj-champagne bg-vjj-cream/95 backdrop-blur">
+        <div className="mx-auto flex max-w-[1700px] items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+          {/* Admin Brand */}
+          <Link
+            to="/admin"
+            className="flex min-w-[180px] shrink-0 items-center gap-3"
+          >
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-vjj-espresso text-vjj-champagne shadow-[0_10px_30px_rgba(52,34,23,0.18)]">
+              <Store size={21} />
+            </div>
 
-              <div>
-                <p className="font-serif text-2xl font-bold leading-none text-vjj-black">
-                  VJJ Admin
-                </p>
-                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-vjj-bronze">
-                  Store Manager
-                </p>
-              </div>
-            </Link>
+            <div className="hidden sm:block">
+              <p className="font-serif text-2xl font-bold leading-none text-vjj-black">
+                VJJ
+                <br />
+                Admin
+              </p>
 
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-vjj-black transition hover:bg-vjj-black hover:text-white lg:hidden"
-            >
-              <Home size={16} />
-              Store
-            </Link>
-          </div>
+              <p className="mt-1 text-[10px] font-black uppercase tracking-[0.24em] text-vjj-gold">
+                Store Manager
+              </p>
+            </div>
+          </Link>
 
-          <nav className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
-            {navItems.map((item) => {
-              const Icon = item.icon;
+          {/* Navigation */}
+          <nav className="min-w-0 flex-1 overflow-x-auto pb-1 scrollbar-thin">
+            <div className="flex w-max items-center gap-2 rounded-full bg-vjj-soft p-1.5">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
 
-              return (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  end={item.href === "/admin"}
-                  className={({ isActive }) =>
-                    `flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                      isActive
-                        ? "bg-vjj-black text-white"
-                        : "bg-white text-vjj-black hover:bg-vjj-black hover:text-white"
-                    }`
-                  }
-                >
-                  <Icon size={16} />
-                  {item.label}
-                </NavLink>
-              );
-            })}
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                    className={({ isActive }) =>
+                      `inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-bold transition ${
+                        isActive
+                          ? "bg-vjj-espresso text-vjj-champagne shadow-[0_8px_22px_rgba(52,34,23,0.18)]"
+                          : "bg-white text-vjj-black hover:bg-vjj-champagne hover:text-vjj-espresso"
+                      }`
+                    }
+                  >
+                    <Icon size={16} />
+                    {item.label}
+                  </NavLink>
+                );
+              })}
+            </div>
           </nav>
 
-          <div className="flex items-center gap-2">
+          {/* Right Actions */}
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             <Link
               to="/"
-              className="hidden items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-vjj-black transition hover:bg-vjj-black hover:text-white lg:inline-flex"
+              className="hidden items-center gap-2 rounded-full border border-vjj-champagne bg-white px-4 py-2.5 text-sm font-bold text-vjj-black transition hover:bg-vjj-soft md:inline-flex"
             >
-              <Home size={16} />
-              View Store
+              <Store size={16} />
+              <span className="hidden xl:inline">View Store</span>
             </Link>
 
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+              className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition hover:bg-red-100"
             >
               <LogOut size={16} />
-              Logout
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl">
+      <main className="min-h-[calc(100vh-76px)]">
         <Outlet />
       </main>
-    </section>
+    </div>
   );
 }
