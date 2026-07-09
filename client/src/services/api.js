@@ -29,10 +29,24 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const status = error?.response?.status;
+    const requestUrl = error?.config?.url || "";
+
     console.error(
       "API request failed:",
-      error?.response?.status || error?.message || "Unknown error",
+      status || error?.message || "Unknown error",
     );
+
+    const isAuthPage = window.location.pathname.includes("/login");
+    const isWishlistRequest = requestUrl.includes("/wishlist");
+
+    if (status === 401 && !isWishlistRequest) {
+      localStorage.removeItem("vjj_token");
+
+      if (!isAuthPage) {
+        window.location.href = "/login";
+      }
+    }
 
     return Promise.reject(error);
   },

@@ -407,11 +407,22 @@ exports.disableAdminManualRate = async (req, res) => {
       setting,
     });
   } catch (error) {
-    console.error("Disable manual rate error:", error.message);
+    console.error("Public rate fetch error:", error.message);
 
-    return res.status(500).json({
-      success: false,
-      message: "Unable to disable manual rates",
+    return res.status(200).json({
+      success: true,
+      state: req.query.state || "Uttar Pradesh",
+      displayMode: "fallback",
+      source: "Rate temporarily unavailable",
+      updatedAt: new Date().toISOString(),
+      rates: {
+        gold24kPer10g: 0,
+        gold22kPer10g: 0,
+        gold18kPer10g: 0,
+        silverPerKg: 0,
+      },
+      message:
+        "Live metal rate is temporarily unavailable. Please update store rate manually.",
     });
   }
 };
