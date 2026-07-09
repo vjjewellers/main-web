@@ -74,10 +74,12 @@ app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/invoices", invoiceRoutes);
 app.use("/api/store-settings", storeSettingsRoutes);
 
-app.use((req, res) => {
-  res.status(404).json({
+app.use((err, req, res, next) => {
+  console.error("Server error:", err);
+
+  res.status(err.statusCode || 500).json({
     success: false,
-    message: `Route not found: ${req.originalUrl}`,
+    message: err.message || "Server Error",
   });
 });
 

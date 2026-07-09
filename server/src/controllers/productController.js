@@ -496,7 +496,18 @@ const deleteProductAdmin = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const product = await Product.findById(id);
+    const product = await Product.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          isActive: false,
+        },
+      },
+      {
+        new: true,
+        runValidators: false,
+      },
+    );
 
     if (!product) {
       return res.status(404).json({
@@ -505,13 +516,10 @@ const deleteProductAdmin = async (req, res, next) => {
       });
     }
 
-    product.isActive = false;
-
-    await product.save();
-
     return res.status(200).json({
       success: true,
       message: "Product deleted successfully.",
+      product,
     });
   } catch (error) {
     next(error);
