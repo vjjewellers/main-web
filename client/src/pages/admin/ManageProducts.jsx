@@ -377,6 +377,11 @@ export default function ManageProducts() {
       return false;
     }
 
+    if (!formData.description.trim()) {
+      toast.error("Short description is required");
+      return false;
+    }
+
     if (!formData.material.trim()) {
       toast.error("Material is required");
       return false;
@@ -408,8 +413,10 @@ export default function ManageProducts() {
         toast.error("Final product price must be greater than zero");
         return false;
       }
-    } else if (!formData.price || Number(formData.price) <= 0) {
-      toast.error("Valid price is required");
+    }
+
+    if (!isCalculatorMode && (!formData.price || Number(formData.price) <= 0)) {
+      toast.error("Valid selling price is required");
       return false;
     }
 
@@ -502,6 +509,7 @@ export default function ManageProducts() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    event.stopPropagation();
 
     if (!validateForm()) return;
 
@@ -509,6 +517,13 @@ export default function ManageProducts() {
       setSaving(true);
 
       const payload = buildPayload();
+
+      console.log("PRODUCT PAYLOAD:", payload);
+
+      if (!payload.price || Number(payload.price) <= 0) {
+        toast.error("Final product price is missing");
+        return;
+      }
 
       if (editingProduct) {
         const { data } = await api.patch(
@@ -537,7 +552,14 @@ export default function ManageProducts() {
 
       resetForm();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Unable to save product");
+      console.error("PRODUCT SAVE ERROR:", error);
+      console.error("PRODUCT SAVE ERROR RESPONSE:", error.response?.data);
+
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Unable to save product",
+      );
     } finally {
       setSaving(false);
     }
@@ -701,6 +723,7 @@ export default function ManageProducts() {
 
       {showForm && (
         <form
+          noValidate
           onSubmit={handleSubmit}
           className="mb-8 rounded-[2rem] border border-black/10 bg-white p-5 shadow-sm md:p-7"
         >
