@@ -291,7 +291,9 @@ const getProducts = async (req, res, next) => {
 };
 
 const getProductsAdmin = async (req, res, next) => {
-  return listProducts(req, res, next, true);
+  const includeInactive = req.query.includeInactive === "true";
+
+  return listProducts(req, res, next, includeInactive);
 };
 
 const getProductBySlug = async (req, res, next) => {

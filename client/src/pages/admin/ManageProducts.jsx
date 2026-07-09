@@ -242,6 +242,7 @@ export default function ManageProducts() {
       const { data } = await api.get("/products/admin/all", {
         params: {
           limit: 200,
+          includeInactive: false,
         },
       });
 
