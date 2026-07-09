@@ -10,6 +10,8 @@ const adminRoutes = require("./routes/adminRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const rateRoutes = require("./routes/rateRoutes");
+const invoiceRoutes = require("./routes/invoiceRoutes");
+const storeSettingsRoutes = require("./routes/storeSettingsRoutes");
 
 const app = express();
 
@@ -69,6 +71,8 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/invoices", invoiceRoutes);
+app.use("/api/store-settings", storeSettingsRoutes);
 
 app.use((req, res) => {
   res.status(404).json({

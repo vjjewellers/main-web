@@ -3,7 +3,6 @@ import {
   Calculator,
   CheckCircle2,
   Cloud,
-  Loader2,
   RefreshCcw,
   Sparkles,
 } from "lucide-react";
@@ -79,7 +78,7 @@ const getRatePerGram = (rates, purity) => {
   return 0;
 };
 
-const calculatePricing = (input) => {
+const calculatePricing = (input = {}) => {
   const grossWeightGrams = numberValue(input.grossWeightGrams);
   const lessWeightGrams = Math.max(0, numberValue(input.lessWeightGrams));
 
@@ -111,7 +110,6 @@ const calculatePricing = (input) => {
   }
 
   const discountAmount = Math.max(0, numberValue(input.discountAmount));
-
   const gstPercent = Math.max(0, numberValue(input.gstPercent));
 
   const taxableValue = Math.max(
@@ -120,7 +118,6 @@ const calculatePricing = (input) => {
   );
 
   const gstAmount = roundMoney((taxableValue * gstPercent) / 100);
-
   const finalPrice = roundMoney(taxableValue + gstAmount);
 
   return {
@@ -248,13 +245,11 @@ export default function JewelleryPricingCalculator({
     onChange(nextPricing);
   };
 
-  const copyLiveRateToForm = () => {
+  const copyCurrentRateToForm = () => {
     const ratePerGram = getRatePerGram(marketRateData?.rates, purity);
 
     if (!ratePerGram) {
-      toast.error(
-        `A live rate is not available for ${purity || "this purity"}`,
-      );
+      toast.error(`Rate is not available for ${purity || "this purity"}`);
       return;
     }
 
@@ -267,7 +262,7 @@ export default function JewelleryPricingCalculator({
 
     onChange(nextPricing);
 
-    toast.success("Current rate copied to product calculator");
+    toast.success("Current rate copied to calculator");
   };
 
   const sourceLabel =
@@ -298,8 +293,8 @@ export default function JewelleryPricingCalculator({
           </div>
 
           <p className="mt-4 max-w-3xl text-sm leading-6 text-vjj-coffee">
-            Final selling price is calculated automatically from weight, current
-            metal rate, stone value, making charges, discount and GST.
+            Final selling price is calculated from weight, metal rate, stone
+            value, making charges, discount and GST.
           </p>
         </div>
 
@@ -359,7 +354,6 @@ export default function JewelleryPricingCalculator({
               onClick={() => loadMarketRate(pricing.rateState, true)}
               disabled={loadingRates || !isRateSupported}
               className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-vjj-espresso px-4 py-3 text-xs font-bold text-vjj-champagne transition hover:bg-vjj-gold hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-              title="Fetch latest metal rate"
             >
               <RefreshCcw
                 size={16}
@@ -373,6 +367,7 @@ export default function JewelleryPricingCalculator({
         <Field label="Rate Source">
           <div className="rounded-2xl border border-vjj-champagne bg-white px-4 py-3">
             <p className="text-sm font-bold text-vjj-black">{sourceLabel}</p>
+
             <p className="mt-1 text-xs text-vjj-coffee">
               {pricing.rateUpdatedAt
                 ? new Date(pricing.rateUpdatedAt).toLocaleString("en-IN")
@@ -384,8 +379,8 @@ export default function JewelleryPricingCalculator({
 
       {!isRateSupported && (
         <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
-          Live rate autofill is currently available for Gold and Silver. Enter a
-          custom rate per gram for other materials.
+          Live rate autofill is available for Gold and Silver. For other
+          materials, enter a custom rate per gram.
         </div>
       )}
 
@@ -505,7 +500,7 @@ export default function JewelleryPricingCalculator({
           {marketRateData?.rates && (
             <button
               type="button"
-              onClick={copyLiveRateToForm}
+              onClick={copyCurrentRateToForm}
               className="inline-flex items-center justify-center gap-2 rounded-full border border-vjj-gold/50 bg-white/10 px-5 py-3 text-sm font-bold transition hover:bg-vjj-gold hover:text-white"
             >
               <Sparkles size={16} />
@@ -524,6 +519,7 @@ function Field({ label, children }) {
       <span className="mb-2 block text-sm font-bold text-vjj-black">
         {label}
       </span>
+
       {children}
     </label>
   );

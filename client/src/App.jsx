@@ -13,6 +13,10 @@ import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import UserDashboard from "./pages/UserDashboard";
 import Wishlist from "./pages/wishlist";
+import Billing from "./pages/admin/Billing";
+import InvoiceDetails from "./pages/admin/InvoiceDetails";
+import Invoices from "./pages/admin/Invoices";
+import StoreSettings from "./pages/admin/StoreSettings";
 
 import AdminLayout from "./components/admin/AdminLayout";
 import Navbar from "./components/common/Navbar";
@@ -78,10 +82,14 @@ export default function App() {
         {/* Protected admin dashboard */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
+          <Route path="billing" element={<Billing />} />
+          <Route path="invoices" element={<Invoices />} />
+          <Route path="invoices/:invoiceId" element={<InvoiceDetails />} />
+          <Route path="market-rates" element={<MarketRates />} />
           <Route path="products" element={<ManageProducts />} />
           <Route path="orders" element={<ManageOrders />} />
           <Route path="users" element={<ManageUsers />} />
-          <Route path="market-rates" element={<MarketRates />} />
+          <Route path="store-settings" element={<StoreSettings />} />
           <Route path="change-password" element={<ChangePassword />} />
           <Route path="help" element={<AdminHelp />} />
         </Route>

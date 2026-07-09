@@ -12,48 +12,24 @@ import {
   ShoppingBag,
   Store,
   Users,
+  ReceiptText,
+  FileText,
+  Settings,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { logout } from "../../features/auth/authSlice";
 
 const navigationItems = [
-  {
-    label: "Dashboard",
-    to: "/admin",
-    icon: LayoutDashboard,
-    end: true,
-  },
-  {
-    label: "Market Rates",
-    to: "/admin/market-rates",
-    icon: Gem,
-  },
-  {
-    label: "Products",
-    to: "/admin/products",
-    icon: Package,
-  },
-  {
-    label: "Orders",
-    to: "/admin/orders",
-    icon: ShoppingBag,
-  },
-  {
-    label: "Users",
-    to: "/admin/users",
-    icon: Users,
-  },
-  {
-    label: "Password",
-    to: "/admin/change-password",
-    icon: KeyRound,
-  },
-  {
-    label: "Help",
-    to: "/admin/help",
-    icon: CircleHelp,
-  },
+  { label: "Dashboard", to: "/admin", icon: LayoutDashboard, end: true },
+  { label: "Billing", to: "/admin/billing", icon: ReceiptText },
+  { label: "Invoices", to: "/admin/invoices", icon: FileText },
+  { label: "Market Rates", to: "/admin/market-rates", icon: Gem },
+  { label: "Products", to: "/admin/products", icon: Package },
+  { label: "Users", to: "/admin/users", icon: Users },
+  { label: "Settings", to: "/admin/store-settings", icon: Settings },
+  { label: "Password", to: "/admin/change-password", icon: KeyRound },
+  { label: "Help", to: "/admin/help", icon: CircleHelp },
 ];
 
 const getUserRole = (user) =>

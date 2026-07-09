@@ -376,7 +376,38 @@ export default function ManageProducts() {
       return false;
     }
 
-    if (!formData.price || Number(formData.price) <= 0) {
+    if (!formData.material.trim()) {
+      toast.error("Material is required");
+      return false;
+    }
+
+    if (!formData.purity.trim()) {
+      toast.error("Purity is required");
+      return false;
+    }
+
+    const isCalculatorMode = formData.pricingMode === "calculator";
+
+    if (isCalculatorMode) {
+      const calculated = calculatePricing(
+        formData.jewelleryPricing || emptyPricing,
+      );
+
+      if (!calculated.grossWeightGrams || calculated.grossWeightGrams <= 0) {
+        toast.error("Gross weight is required");
+        return false;
+      }
+
+      if (!calculated.ratePerGram || calculated.ratePerGram <= 0) {
+        toast.error("Metal rate per gram is required");
+        return false;
+      }
+
+      if (!calculated.finalPrice || calculated.finalPrice <= 0) {
+        toast.error("Final product price must be greater than zero");
+        return false;
+      }
+    } else if (!formData.price || Number(formData.price) <= 0) {
       toast.error("Valid price is required");
       return false;
     }
@@ -400,11 +431,11 @@ export default function ManageProducts() {
   };
 
   const buildPayload = () => {
+    const isCalculatorMode = formData.pricingMode === "calculator";
+
     const calculatorPricing = calculatePricing(
       formData.jewelleryPricing || emptyPricing,
     );
-
-    const isCalculatorMode = formData.pricingMode === "calculator";
 
     return {
       name: formData.name.trim(),
@@ -457,7 +488,7 @@ export default function ManageProducts() {
         : Number(formData.gstPercent || 0),
 
       isFeatured: Boolean(formData.isFeatured),
-      readyToShip: Boolean(formData.readyToShip),
+      isReadyToShip: Boolean(formData.readyToShip),
       isActive: Boolean(formData.isActive),
 
       images: formData.images.slice(0, 4),
@@ -770,8 +801,8 @@ export default function ManageProducts() {
                       Jewellery Calculator
                     </p>
                     <p className="mt-1 text-sm text-vjj-coffee">
-                      Calculate final product price from live rate, weight,
-                      making charge, discount and GST.
+                      Calculate final price from rate, weight, making charge,
+                      discount and GST.
                     </p>
                   </button>
 
@@ -786,8 +817,8 @@ export default function ManageProducts() {
                   >
                     <p className="font-bold text-vjj-black">Manual Price</p>
                     <p className="mt-1 text-sm text-vjj-coffee">
-                      Use a simple fixed selling price for non-metal, legacy or
-                      special items.
+                      Use a fixed selling price for old, non-metal or special
+                      products.
                     </p>
                   </button>
                 </div>
@@ -1168,9 +1199,12 @@ export default function ManageProducts() {
                           {formatCurrency(product.price)}
                         </p>
 
-                        {product.comparePrice > product.price && (
+                        {(product.compareAtPrice || product.comparePrice) >
+                          product.price && (
                           <p className="text-sm font-semibold text-stone-400 line-through">
-                            {formatCurrency(product.comparePrice)}
+                            {formatCurrency(
+                              product.compareAtPrice || product.comparePrice,
+                            )}
                           </p>
                         )}
 
