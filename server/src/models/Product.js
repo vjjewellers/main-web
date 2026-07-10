@@ -402,66 +402,60 @@ const productSchema = new mongoose.Schema(
   },
 );
 
-productSchema.pre("validate", function (next) {
-  try {
-    if (this.name && !this.slug) {
-      this.slug = this.name
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
+productSchema.pre("validate", function () {
+  if (this.name && !this.slug) {
+    this.slug = this.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  if (this.sku) {
+    this.sku = this.sku.toUpperCase().trim();
+  }
+
+  if (this.images && this.images.length > 0) {
+    const hasPrimary = this.images.some((image) => image.isPrimary);
+
+    if (!hasPrimary) {
+      this.images[0].isPrimary = true;
     }
 
-    if (this.sku) {
-      this.sku = this.sku.toUpperCase().trim();
-    }
+    let primaryFound = false;
 
-    if (this.images && this.images.length > 0) {
-      const hasPrimary = this.images.some((image) => image.isPrimary);
-
-      if (!hasPrimary) {
-        this.images[0].isPrimary = true;
+    this.images = this.images.map((image) => {
+      if (image.isPrimary && !primaryFound) {
+        primaryFound = true;
+        return image;
       }
 
-      let primaryFound = false;
+      if (image.isPrimary && primaryFound) {
+        image.isPrimary = false;
+      }
 
-      this.images = this.images.map((image) => {
-        if (image.isPrimary && !primaryFound) {
-          primaryFound = true;
-          return image;
-        }
+      return image;
+    });
+  }
 
-        if (image.isPrimary && primaryFound) {
-          image.isPrimary = false;
-        }
+  if (this.pricingMode === "calculator") {
+    const currentPricing =
+      this.jewelleryPricing?.toObject?.() || this.jewelleryPricing || {};
 
-        return image;
-      });
-    }
+    const calculated = calculateJewelleryPricing(currentPricing);
 
-    if (this.pricingMode === "calculator") {
-      const currentPricing =
-        this.jewelleryPricing?.toObject?.() || this.jewelleryPricing || {};
+    this.jewelleryPricing = {
+      ...currentPricing,
+      ...calculated,
+      calculatedAt: new Date(),
+    };
 
-      const calculated = calculateJewelleryPricing(currentPricing);
+    this.price = calculated.finalPrice;
+    this.makingCharge = calculated.makingChargeAmount;
+    this.gstPercent = calculated.gstPercent;
 
-      this.jewelleryPricing = {
-        ...currentPricing,
-        ...calculated,
-        calculatedAt: new Date(),
-      };
-
-      this.price = calculated.finalPrice;
-      this.makingCharge = calculated.makingChargeAmount;
-      this.gstPercent = calculated.gstPercent;
-
-      this.grossWeight = `${calculated.grossWeightGrams} g`;
-      this.netWeight = `${calculated.netWeightGrams} g`;
-    }
-
-    next();
-  } catch (error) {
-    next(error);
+    this.grossWeight = `${calculated.grossWeightGrams} g`;
+    this.netWeight = `${calculated.netWeightGrams} g`;
   }
 });
 
